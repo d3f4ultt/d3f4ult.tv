@@ -11,6 +11,20 @@ export default {
         sm: ".1875rem", /* 3px */
       },
       colors: {
+        bullish: "hsl(var(--success-bullish) / <alpha-value>)",
+        bearish: "hsl(var(--destructive) / <alpha-value>)",
+        ticker: {
+          DEFAULT: "hsl(var(--ticker-bar) / <alpha-value>)",
+          foreground: "hsl(var(--ticker-bar-foreground) / <alpha-value>)",
+        },
+        breaking: {
+          DEFAULT: "hsl(var(--breaking-news) / <alpha-value>)",
+          foreground: "hsl(var(--breaking-news-foreground) / <alpha-value>)",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning-alert) / <alpha-value>)",
+          foreground: "hsl(var(--warning-alert-foreground) / <alpha-value>)",
+        },
         // Flat / base colors (regular buttons)
         background: "hsl(var(--background) / <alpha-value>)",
         foreground: "hsl(var(--foreground) / <alpha-value>)",
@@ -100,6 +114,33 @@ export default {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "ticker-scroll": "ticker-scroll 60s linear infinite",
+        "pulse-glow": "pulse-glow 2s ease-in-out",
+        "slide-up": "slide-up 0.4s ease-out",
+        "fade-in": "fade-in 0.6s ease-out",
+        "count-up": "count-up 0.3s ease-out",
+      },
+      keyframes: {
+        "ticker-scroll": {
+          "0%": { transform: "translateX(100%)" },
+          "100%": { transform: "translateX(-100%)" },
+        },
+        "pulse-glow": {
+          "0%, 100%": { opacity: "1", boxShadow: "0 0 0 0 currentColor" },
+          "50%": { opacity: "0.8", boxShadow: "0 0 20px 4px currentColor" },
+        },
+        "slide-up": {
+          "0%": { transform: "translateY(20px)", opacity: "0" },
+          "100%": { transform: "translateY(0)", opacity: "1" },
+        },
+        "fade-in": {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
+        "count-up": {
+          "0%": { transform: "scale(1.1)", opacity: "0.7" },
+          "100%": { transform: "scale(1)", opacity: "1" },
+        },
       },
     },
   },
