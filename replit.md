@@ -1,0 +1,118 @@
+# Crypto Live - Real-time Market Dashboard
+
+## Overview
+A professional broadcast-quality crypto streaming dashboard with real-time price feeds, breaking news, and Twitter integration. Built for streamers and content creators who want CNBC-style layouts with auto-switching capabilities.
+
+## Purpose
+Create a live crypto market dashboard that can be used for streaming with multiple layout modes:
+- Full Dashboard: Complete 3-column view with prices, news, and tweets
+- Stream + Sidebar: Main stream area with data sidebar
+- Video Overlay: Minimal overlay for OBS with ticker and logo
+
+## Current State
+- ✅ Complete frontend with React components
+- ✅ Real-time WebSocket integration
+- ✅ CoinGecko API for BTC, ETH, BNB, SOL prices
+- ✅ CryptoPanic news feed integration
+- ✅ Twitter API integration for crypto tweets
+- ✅ Auto-switching layout system (45s intervals)
+- ✅ CNBC-inspired broadcast design
+- ✅ Responsive animations and transitions
+
+## Recent Changes
+**Date: 2025-10-21**
+- Created complete schema for crypto prices, news, and tweets
+- Implemented all frontend components with exceptional visual quality
+- Built WebSocket server for real-time data updates
+- Integrated CoinGecko API for live crypto prices
+- Added CryptoPanic news feed with rotation
+- Implemented Twitter API v2 integration
+- Created 3 distinct layout modes for streaming
+- Added auto-switching system with countdown timer
+
+## Project Architecture
+
+### Frontend (`client/`)
+**Key Components:**
+- `PriceTickerCard.tsx` - Animated crypto price cards with sparklines
+- `NewsCard.tsx` - Breaking news cards with rotation
+- `TweetCard.tsx` - Twitter feed cards with verified badges
+- `TickerBar.tsx` - Scrolling ticker bar for bottom overlay
+- `LayoutSwitcher.tsx` - Layout mode switcher with auto-switch toggle
+- `LiveIndicator.tsx` - WebSocket connection status
+- `LoadingState.tsx` - Beautiful loading skeletons
+
+**Main Page:**
+- `Dashboard.tsx` - Main dashboard with 3 layout modes and WebSocket handling
+
+### Backend (`server/`)
+**API Routes:**
+- `GET /api/crypto/prices` - Fetch BTC, ETH, BNB, SOL prices from CoinGecko
+- `GET /api/news` - Fetch crypto news from CryptoPanic
+- `GET /api/tweets` - Fetch crypto tweets from Twitter API v2
+- `WebSocket /ws` - Real-time updates for all data types
+
+**Data Sources:**
+- CoinGecko API (free tier) - Crypto market data
+- CryptoPanic API (public feed) - Crypto news
+- Twitter API v2 - Crypto-related tweets
+
+### Shared Types (`shared/schema.ts`)
+- `CryptoPrice` - Crypto price data with sparklines
+- `NewsArticle` - News article with source and votes
+- `Tweet` - Twitter data with author info and metrics
+- `LayoutMode` - Dashboard layout modes
+- `WSMessage` - WebSocket message types
+
+## Design System
+
+### Colors (Dark Mode Optimized)
+- Background: Deep navy-black (220 25% 8%)
+- Primary: Electric blue (210 100% 55%)
+- Success/Bullish: Vibrant green (145 65% 45%)
+- Danger/Bearish: Red (0 75% 58%)
+- Warning: Amber (35 90% 60%)
+
+### Typography
+- Primary: Inter (400-800 weights)
+- Monospace: JetBrains Mono (prices, numbers)
+
+### Animations
+- Price updates: 300ms smooth counting
+- Layout transitions: 800ms ease-in-out
+- News rotation: 10 seconds per article
+- Tweet rotation: 8 seconds per tweet
+- Ticker scroll: 60s continuous loop
+
+## User Preferences
+- Default layout: Full Dashboard
+- Auto-switch enabled by default (45s intervals)
+- Dark mode always enabled (optimized for streaming)
+
+## Environment Variables
+- `TWITTER_BEARER_TOKEN` - Twitter API Bearer Token
+- `TWITTER_API_KEY` - Twitter API Key
+- `TWITTER_API_SECRET` - Twitter API Secret
+
+## Key Features
+1. **Real-time Price Feeds** - WebSocket updates every 30s
+2. **Breaking News Rotation** - Auto-rotates every 10s
+3. **Twitter Integration** - Live crypto tweets with rotation
+4. **Layout Auto-Switching** - TV news network style transitions
+5. **Streaming Optimized** - Multiple layouts for OBS/Streamlabs
+6. **Professional Design** - CNBC-inspired broadcast aesthetic
+7. **Responsive Animations** - Smooth transitions and micro-interactions
+
+## Technical Stack
+- **Frontend**: React, TypeScript, TailwindCSS, Framer Motion, Wouter
+- **Backend**: Express, WebSocket (ws), Axios
+- **APIs**: CoinGecko, CryptoPanic, Twitter API v2
+- **Real-time**: WebSocket for live data streaming
+- **State Management**: TanStack Query for data fetching
+
+## Development Notes
+- WebSocket reconnects automatically after 5s disconnect
+- API calls are cached to reduce rate limiting
+- Fallback data provided when APIs are unavailable
+- All components have proper loading and error states
+- Design follows universal design guidelines for consistency
