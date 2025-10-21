@@ -21,24 +21,43 @@ export default function Dashboard() {
   const [currentTweetIndex, setCurrentTweetIndex] = useState(0);
   const wsRef = useRef<WebSocket | null>(null);
 
-  // Initial data fetch
-  const { isLoading: pricesLoading } = useQuery({
+  // Initial data fetch with proper error handling
+  const { data: pricesData, isLoading: pricesLoading, error: pricesError } = useQuery<CryptoPrice[]>({
     queryKey: ['/api/crypto/prices'],
     refetchInterval: 30000,
-    onSuccess: (data: CryptoPrice[]) => setPrices(data),
+    retry: 3,
   });
 
-  const { isLoading: newsLoading } = useQuery({
+  const { data: newsData, isLoading: newsLoading, error: newsError } = useQuery<NewsArticle[]>({
     queryKey: ['/api/news'],
     refetchInterval: 60000,
-    onSuccess: (data: NewsArticle[]) => setNews(data),
+    retry: 3,
   });
 
-  const { isLoading: tweetsLoading } = useQuery({
+  const { data: tweetsData, isLoading: tweetsLoading, error: tweetsError } = useQuery<Tweet[]>({
     queryKey: ['/api/tweets'],
     refetchInterval: 60000,
-    onSuccess: (data: Tweet[]) => setTweets(data),
+    retry: 3,
   });
+
+  // Update state when data changes - with proper synchronization
+  useEffect(() => {
+    if (pricesData !== undefined) {
+      setPrices(pricesData);
+    }
+  }, [pricesData]);
+
+  useEffect(() => {
+    if (newsData !== undefined) {
+      setNews(newsData);
+    }
+  }, [newsData]);
+
+  useEffect(() => {
+    if (tweetsData !== undefined) {
+      setTweets(tweetsData);
+    }
+  }, [tweetsData]);
 
   // WebSocket connection for real-time updates
   useEffect(() => {
@@ -136,10 +155,29 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [tweets.length]);
 
-  const isLoading = pricesLoading || newsLoading || tweetsLoading;
+  const isLoading = pricesLoading && newsLoading && tweetsLoading;
+  const hasErrors = pricesError || newsError || tweetsError;
 
   if (isLoading) {
     return <LoadingState message="Connecting to live market data..." />;
+  }
+
+  if (hasErrors && prices.length === 0 && news.length === 0 && tweets.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="text-center p-8">
+          <h2 className="text-2xl font-bold mb-4">Connection Issue</h2>
+          <p className="text-muted-foreground mb-4">
+            Having trouble connecting to data sources. Retrying automatically...
+          </p>
+          <div className="flex items-center justify-center gap-2">
+            <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+            <div className="w-2 h-2 bg-primary rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
+            <div className="w-2 h-2 bg-primary rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // Full Dashboard Layout
