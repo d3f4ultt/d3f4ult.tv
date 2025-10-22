@@ -21,12 +21,19 @@ Create a live crypto market dashboard that can be used for streaming with multip
 
 ## Recent Changes
 **Date: 2025-10-22**
-- Added comprehensive OBS Browser Source Integration Guide at `/obs-guide`
-- Created 4 streaming presets with copy-to-clipboard URLs
-- Implemented `ticker-only` layout mode for lower-third OBS overlays (URL-only, not in switcher)
-- Added URL parameter support: `?layout={mode}` sets initial layout and disables auto-switch
-- Fixed auto-switch logic to only disable for valid layout parameters
-- Added OBS Setup Guide button to Dashboard header
+- **Task 2 Complete**: Implemented custom layout timing controls and keyboard shortcuts
+  - Added SettingsPanel with configurable auto-switch interval (15-300s slider)
+  - Implemented smart keyboard shortcuts: 1/2/3 for manual layout selection, Space for auto-switch toggle
+  - Manual layout changes (1/2/3) pause auto-switch for 3s then auto-resume
+  - Space key cancels pending auto-resume when active (manual override)
+  - Keyboard shortcuts disabled when settings dialog open (prevents accidental toggles)
+  - Proper timeout management with cleanup on unmount and manual overrides
+- **Task 1 Complete**: Added comprehensive OBS Browser Source Integration Guide at `/obs-guide`
+  - Created 4 streaming presets with copy-to-clipboard URLs
+  - Implemented `ticker-only` layout mode for lower-third OBS overlays (URL-only, not in switcher)
+  - Added URL parameter support: `?layout={mode}` sets initial layout and disables auto-switch
+  - Fixed auto-switch logic to only disable for valid layout parameters
+  - Added OBS Setup Guide button to Dashboard header
 
 **Date: 2025-10-21**
 - Created complete schema for crypto prices, news, and tweets
@@ -47,8 +54,10 @@ Create a live crypto market dashboard that can be used for streaming with multip
 - `TweetCard.tsx` - Twitter feed cards with verified badges
 - `TickerBar.tsx` - Scrolling ticker bar for bottom overlay
 - `LayoutSwitcher.tsx` - Layout mode switcher with auto-switch toggle
+- `SettingsPanel.tsx` - Configurable auto-switch interval with slider control
 - `LiveIndicator.tsx` - WebSocket connection status
 - `LoadingState.tsx` - Beautiful loading skeletons
+- `OBSGuide.tsx` - Complete OBS integration documentation page
 
 **Main Page:**
 - `Dashboard.tsx` - Main dashboard with 3 layout modes and WebSocket handling
@@ -107,10 +116,12 @@ Create a live crypto market dashboard that can be used for streaming with multip
 1. **Real-time Price Feeds** - WebSocket updates every 30s
 2. **Breaking News Rotation** - Auto-rotates every 10s
 3. **Twitter Integration** - Live crypto tweets with rotation
-4. **Layout Auto-Switching** - TV news network style transitions
-5. **Streaming Optimized** - Multiple layouts for OBS/Streamlabs
-6. **Professional Design** - CNBC-inspired broadcast aesthetic
-7. **Responsive Animations** - Smooth transitions and micro-interactions
+4. **Layout Auto-Switching** - TV news network style transitions with configurable intervals (15-300s)
+5. **Keyboard Shortcuts** - Quick layout switching (1/2/3 keys) and auto-switch control (Space key)
+6. **OBS Integration** - Complete browser source setup guide with streaming presets
+7. **Streaming Optimized** - Multiple layouts for OBS/Streamlabs including ticker-only mode
+8. **Professional Design** - CNBC-inspired broadcast aesthetic
+9. **Responsive Animations** - Smooth transitions and micro-interactions
 
 ## Technical Stack
 - **Frontend**: React, TypeScript, TailwindCSS, Framer Motion, Wouter
