@@ -9,6 +9,7 @@ import { TweetCard } from "@/components/TweetCard";
 import { TickerBar } from "@/components/TickerBar";
 import { LayoutSwitcher } from "@/components/LayoutSwitcher";
 import { LiveIndicator } from "@/components/LiveIndicator";
+import { SettingsPanel } from "@/components/SettingsPanel";
 import { LoadingState, PriceCardSkeleton, NewsCardSkeleton, TweetCardSkeleton } from "@/components/LoadingState";
 import type { CryptoPrice, NewsArticle, Tweet, LayoutMode, WSMessage } from "@shared/schema";
 
@@ -25,11 +26,14 @@ export default function Dashboard() {
   const [tweets, setTweets] = useState<Tweet[]>([]);
   const [currentLayout, setCurrentLayout] = useState<LayoutMode>(initialLayout);
   const [autoSwitch, setAutoSwitch] = useState(!isValidLayout); // Only disable auto-switch if layout parameter is valid
+  const [autoSwitchInterval, setAutoSwitchInterval] = useState(45); // Configurable interval in seconds
   const [nextSwitchIn, setNextSwitchIn] = useState(45);
   const [wsConnected, setWsConnected] = useState(false);
   const [currentNewsIndex, setCurrentNewsIndex] = useState(0);
   const [currentTweetIndex, setCurrentTweetIndex] = useState(0);
+  const [settingsOpen, setSettingsOpen] = useState(false); // Track settings dialog state
   const wsRef = useRef<WebSocket | null>(null);
+  const autoResumeTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Track auto-resume timeout
 
   // Initial data fetch with proper error handling
   const { data: pricesData, isLoading: pricesLoading, error: pricesError } = useQuery<CryptoPrice[]>({
@@ -121,13 +125,13 @@ export default function Dashboard() {
     };
   }, []);
 
-  // Auto layout switching
+  // Auto layout switching with configurable interval
   useEffect(() => {
     if (!autoSwitch) return;
     
     const layouts: LayoutMode[] = ['full-dashboard', 'stream-sidebar', 'video-overlay'];
     let currentIndex = layouts.indexOf(currentLayout);
-    let countdown = 45;
+    let countdown = autoSwitchInterval;
     
     const countdownInterval = setInterval(() => {
       countdown--;
@@ -136,12 +140,17 @@ export default function Dashboard() {
       if (countdown === 0) {
         currentIndex = (currentIndex + 1) % layouts.length;
         setCurrentLayout(layouts[currentIndex]);
-        countdown = 45;
+        countdown = autoSwitchInterval;
       }
     }, 1000);
     
     return () => clearInterval(countdownInterval);
-  }, [autoSwitch, currentLayout]);
+  }, [autoSwitch, currentLayout, autoSwitchInterval]);
+
+  // Reset countdown when interval changes
+  useEffect(() => {
+    setNextSwitchIn(autoSwitchInterval);
+  }, [autoSwitchInterval]);
 
   // News rotation
   useEffect(() => {
@@ -164,6 +173,84 @@ export default function Dashboard() {
     
     return () => clearInterval(interval);
   }, [tweets.length]);
+
+  // Keyboard shortcuts (only active when settings dialog is closed)
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Ignore if settings dialog is open
+      if (settingsOpen) {
+        return;
+      }
+
+      // Ignore if user is typing in an input or other interactive element
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      const layouts: LayoutMode[] = ['full-dashboard', 'stream-sidebar', 'video-overlay'];
+      
+      switch (e.key) {
+        case '1':
+          setCurrentLayout('full-dashboard');
+          // Clear any pending auto-resume timeout
+          if (autoResumeTimeoutRef.current) {
+            clearTimeout(autoResumeTimeoutRef.current);
+          }
+          // Pause auto-switch temporarily
+          setAutoSwitch(false);
+          // Auto-resume after 3 seconds
+          autoResumeTimeoutRef.current = setTimeout(() => {
+            setAutoSwitch(true);
+            autoResumeTimeoutRef.current = null;
+          }, 3000);
+          break;
+        case '2':
+          setCurrentLayout('stream-sidebar');
+          // Clear any pending auto-resume timeout
+          if (autoResumeTimeoutRef.current) {
+            clearTimeout(autoResumeTimeoutRef.current);
+          }
+          // Pause auto-switch temporarily
+          setAutoSwitch(false);
+          // Auto-resume after 3 seconds
+          autoResumeTimeoutRef.current = setTimeout(() => {
+            setAutoSwitch(true);
+            autoResumeTimeoutRef.current = null;
+          }, 3000);
+          break;
+        case '3':
+          setCurrentLayout('video-overlay');
+          // Clear any pending auto-resume timeout
+          if (autoResumeTimeoutRef.current) {
+            clearTimeout(autoResumeTimeoutRef.current);
+          }
+          // Pause auto-switch temporarily
+          setAutoSwitch(false);
+          // Auto-resume after 3 seconds
+          autoResumeTimeoutRef.current = setTimeout(() => {
+            setAutoSwitch(true);
+            autoResumeTimeoutRef.current = null;
+          }, 3000);
+          break;
+        case ' ':
+          e.preventDefault(); // Prevent page scroll
+          // Clear any pending auto-resume timeout (manual override)
+          if (autoResumeTimeoutRef.current) {
+            clearTimeout(autoResumeTimeoutRef.current);
+            autoResumeTimeoutRef.current = null;
+            // If there was a pending resume, keep auto-switch off (user wants manual control)
+            setAutoSwitch(false);
+          } else {
+            // No pending resume, toggle normally
+            setAutoSwitch(!autoSwitch);
+          }
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [autoSwitch, settingsOpen]);
 
   const isLoading = pricesLoading && newsLoading && tweetsLoading;
   const hasErrors = pricesError || newsError || tweetsError;
@@ -217,6 +304,12 @@ export default function Dashboard() {
                   OBS Setup Guide
                 </Button>
               </Link>
+              <SettingsPanel 
+                autoSwitchInterval={autoSwitchInterval}
+                onIntervalChange={setAutoSwitchInterval}
+                open={settingsOpen}
+                onOpenChange={setSettingsOpen}
+              />
               <LiveIndicator connected={wsConnected} />
             </div>
           </div>
@@ -312,7 +405,15 @@ export default function Dashboard() {
           <div className="w-96 bg-background overflow-y-auto p-6 space-y-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold">Live Data</h2>
-              <LiveIndicator connected={wsConnected} />
+              <div className="flex items-center gap-2">
+                <SettingsPanel 
+                  autoSwitchInterval={autoSwitchInterval}
+                  onIntervalChange={setAutoSwitchInterval}
+                  open={settingsOpen}
+                  onOpenChange={setSettingsOpen}
+                />
+                <LiveIndicator connected={wsConnected} />
+              </div>
             </div>
             
             {/* Compact Prices */}
