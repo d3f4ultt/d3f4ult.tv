@@ -24,15 +24,24 @@ Create a live crypto market dashboard that can be used for streaming with multip
 
 ## Recent Changes
 **Date: 2025-10-22**
+- **Task 4 Complete**: Added interactive chat controls with minimize/expand and repositioning
+  - Implemented minimize/expand toggle button in chat header
+  - Created minimized state as compact circular button (h-14 w-14) with MessageSquare icon
+  - Added notification badge system showing unread message count when minimized
+  - Simulated notification system: adds 1-3 messages every 8-15 seconds when minimized
+  - Unread count resets to 0 when chat is expanded
+  - Implemented 4-corner positioning system (top-left, top-right, bottom-left, bottom-right)
+  - Position selector dropdown in chat header with Move icon
+  - Chat positions correctly within stream area container (not viewport)
+  - Removed framer-motion components to prevent React hook errors
+  - E2E testing confirms minimize/expand, repositioning, and notification badges all working
 - **Task 3 Complete**: Integrated Restream chat embed for live stream interaction
   - Created ChatEmbed component with Restream chat iframe
-  - Chat appears as compact, semi-transparent overlay in stream-sidebar layout (320x384px)
-  - Positioned at bottom-right corner of stream area (24px from edges)
+  - Chat appears as floating overlay in stream-sidebar layout (320x384px)
   - Semi-transparent background (80% opacity with backdrop blur) conserves space
   - Chat displays with "Live Chat" header and LIVE indicator
   - Uses VITE_RESTREAM_CHAT_TOKEN environment variable with fallback
   - Maintains full layout switching and keyboard shortcut functionality
-  - E2E testing confirms proper positioning, transparency, and iframe rendering
 - **Task 2 Complete**: Implemented custom layout timing controls and keyboard shortcuts
   - Added SettingsPanel with configurable auto-switch interval (15-300s slider)
   - Implemented smart keyboard shortcuts: 1/2/3 for manual layout selection, Space for auto-switch toggle
@@ -130,7 +139,7 @@ Create a live crypto market dashboard that can be used for streaming with multip
 1. **Real-time Price Feeds** - WebSocket updates every 30s
 2. **Breaking News Rotation** - Auto-rotates every 10s
 3. **Twitter Integration** - Live crypto tweets with rotation
-4. **Restream Chat Integration** - Live chat embed in stream-sidebar layout for viewer interaction
+4. **Interactive Chat Overlay** - Restream chat with minimize/expand, 4-corner repositioning, and notification badges
 5. **Layout Auto-Switching** - TV news network style transitions with configurable intervals (15-300s)
 6. **Keyboard Shortcuts** - Quick layout switching (1/2/3 keys) and auto-switch control (Space key)
 7. **OBS Integration** - Complete browser source setup guide with streaming presets
