@@ -143,13 +143,14 @@ async function fetchTweets(): Promise<Tweet[]> {
   }
 
   try {
-    // Twitter API v2 - Search recent tweets with crypto hashtags
-    const response = await axios.get('https://api.twitter.com/2/tweets/search/recent', {
+    // Twitter API v2 - Fetch tweets from curated list
+    // List: https://x.com/i/lists/1731964315962417340
+    const listId = '1731964315962417340';
+    const response = await axios.get(`https://api.twitter.com/2/lists/${listId}/tweets`, {
       headers: {
         'Authorization': `Bearer ${TWITTER_BEARER_TOKEN}`,
       },
       params: {
-        query: '(#Bitcoin OR #BTC OR #Ethereum OR #ETH OR #Crypto OR #Cryptocurrency) -is:retweet lang:en',
         max_results: 20,
         'tweet.fields': 'created_at,public_metrics,author_id',
         'expansions': 'author_id',
