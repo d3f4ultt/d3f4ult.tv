@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
+import { Button } from "@/components/ui/button";
+import { BookOpen } from "lucide-react";
 import { PriceTickerCard } from "@/components/PriceTickerCard";
 import { NewsCard } from "@/components/NewsCard";
 import { TweetCard } from "@/components/TweetCard";
@@ -10,11 +13,18 @@ import { LoadingState, PriceCardSkeleton, NewsCardSkeleton, TweetCardSkeleton } 
 import type { CryptoPrice, NewsArticle, Tweet, LayoutMode, WSMessage } from "@shared/schema";
 
 export default function Dashboard() {
+  // Check URL parameters for initial layout
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlLayout = urlParams.get('layout') as LayoutMode | null;
+  const validLayouts: LayoutMode[] = ['full-dashboard', 'stream-sidebar', 'video-overlay', 'ticker-only'];
+  const isValidLayout = urlLayout && validLayouts.includes(urlLayout);
+  const initialLayout: LayoutMode = isValidLayout ? urlLayout : 'full-dashboard';
+
   const [prices, setPrices] = useState<CryptoPrice[]>([]);
   const [news, setNews] = useState<NewsArticle[]>([]);
   const [tweets, setTweets] = useState<Tweet[]>([]);
-  const [currentLayout, setCurrentLayout] = useState<LayoutMode>('full-dashboard');
-  const [autoSwitch, setAutoSwitch] = useState(true);
+  const [currentLayout, setCurrentLayout] = useState<LayoutMode>(initialLayout);
+  const [autoSwitch, setAutoSwitch] = useState(!isValidLayout); // Only disable auto-switch if layout parameter is valid
   const [nextSwitchIn, setNextSwitchIn] = useState(45);
   const [wsConnected, setWsConnected] = useState(false);
   const [currentNewsIndex, setCurrentNewsIndex] = useState(0);
@@ -195,12 +205,20 @@ export default function Dashboard() {
         <TickerBar prices={prices} />
         
         <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
             <div>
               <h1 className="text-3xl font-bold mb-1">Crypto Live</h1>
               <p className="text-muted-foreground">Real-time market dashboard</p>
             </div>
-            <LiveIndicator connected={wsConnected} />
+            <div className="flex items-center gap-3">
+              <Link href="/obs-guide">
+                <Button variant="outline" size="sm" data-testid="button-obs-guide">
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  OBS Setup Guide
+                </Button>
+              </Link>
+              <LiveIndicator connected={wsConnected} />
+            </div>
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -321,6 +339,15 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // Ticker Only Layout (just the ticker bar for lower-third overlays)
+  if (currentLayout === 'ticker-only') {
+    return (
+      <div className="h-full bg-transparent" data-testid="layout-ticker-only">
+        <TickerBar prices={prices} />
       </div>
     );
   }

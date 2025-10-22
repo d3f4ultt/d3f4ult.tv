@@ -20,6 +20,14 @@ Create a live crypto market dashboard that can be used for streaming with multip
 - ✅ Responsive animations and transitions
 
 ## Recent Changes
+**Date: 2025-10-22**
+- Added comprehensive OBS Browser Source Integration Guide at `/obs-guide`
+- Created 4 streaming presets with copy-to-clipboard URLs
+- Implemented `ticker-only` layout mode for lower-third OBS overlays (URL-only, not in switcher)
+- Added URL parameter support: `?layout={mode}` sets initial layout and disables auto-switch
+- Fixed auto-switch logic to only disable for valid layout parameters
+- Added OBS Setup Guide button to Dashboard header
+
 **Date: 2025-10-21**
 - Created complete schema for crypto prices, news, and tweets
 - Implemented all frontend components with exceptional visual quality
@@ -27,7 +35,7 @@ Create a live crypto market dashboard that can be used for streaming with multip
 - Integrated CoinGecko API for live crypto prices
 - Added CryptoPanic news feed with rotation
 - Implemented Twitter API v2 integration
-- Created 3 distinct layout modes for streaming
+- Created 3 distinct layout modes for streaming (full-dashboard, stream-sidebar, video-overlay)
 - Added auto-switching system with countdown timer
 
 ## Project Architecture
@@ -61,7 +69,8 @@ Create a live crypto market dashboard that can be used for streaming with multip
 - `CryptoPrice` - Crypto price data with sparklines
 - `NewsArticle` - News article with source and votes
 - `Tweet` - Twitter data with author info and metrics
-- `LayoutMode` - Dashboard layout modes
+- `LayoutMode` - Dashboard layout modes (full-dashboard, stream-sidebar, video-overlay, ticker-only)
+  - Note: `ticker-only` is designed for OBS overlays only (accessed via URL parameter, not in UI switcher)
 - `WSMessage` - WebSocket message types
 
 ## Design System

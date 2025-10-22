@@ -65,7 +65,8 @@ export type Tweet = z.infer<typeof tweetSchema>;
 export const layoutModeSchema = z.enum([
   'full-dashboard',
   'stream-sidebar',
-  'video-overlay'
+  'video-overlay',
+  'ticker-only'
 ]);
 
 export type LayoutMode = z.infer<typeof layoutModeSchema>;
