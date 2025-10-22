@@ -11,6 +11,7 @@ import { LayoutSwitcher } from "@/components/LayoutSwitcher";
 import { LiveIndicator } from "@/components/LiveIndicator";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { LoadingState, PriceCardSkeleton, NewsCardSkeleton, TweetCardSkeleton } from "@/components/LoadingState";
+import ChatEmbed from "@/components/ChatEmbed";
 import type { CryptoPrice, NewsArticle, Tweet, LayoutMode, WSMessage } from "@shared/schema";
 
 export default function Dashboard() {
@@ -388,17 +389,9 @@ export default function Dashboard() {
         <TickerBar prices={prices} />
         
         <div className="flex-1 flex overflow-hidden">
-          {/* Main Stream Area */}
-          <div className="flex-1 bg-card/50 flex items-center justify-center border-r border-border">
-            <div className="text-center p-12">
-              <h2 className="text-4xl font-bold mb-4">Stream Content</h2>
-              <p className="text-muted-foreground text-lg mb-6">
-                Your live stream video would appear here
-              </p>
-              <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                This area is reserved for your streaming software (OBS, Streamlabs, etc.) to capture and broadcast your content
-              </p>
-            </div>
+          {/* Main Chat Area */}
+          <div className="flex-1 p-4 border-r border-border">
+            <ChatEmbed className="h-full" />
           </div>
           
           {/* Sidebar with Data */}
