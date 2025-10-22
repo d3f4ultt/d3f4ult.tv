@@ -1,5 +1,5 @@
-import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Minimize2, Maximize2, MoveIcon } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { MessageSquare, Minimize2, MoveIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -35,14 +35,7 @@ export default function ChatEmbed({
   // Minimized state - compact button with notification badge
   if (minimized) {
     return (
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.8, opacity: 0 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-        className="relative"
-        data-testid="chat-embed-minimized"
-      >
+      <div className="relative" data-testid="chat-embed-minimized">
         <Button
           onClick={onToggle}
           size="icon"
@@ -54,11 +47,7 @@ export default function ChatEmbed({
         
         {/* Notification Badge */}
         {unreadCount > 0 && (
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="absolute -top-1 -right-1"
-          >
+          <div className="absolute -top-1 -right-1">
             <Badge 
               variant="destructive" 
               className="h-6 min-w-6 rounded-full flex items-center justify-center px-1.5 text-xs font-bold"
@@ -66,19 +55,15 @@ export default function ChatEmbed({
             >
               {unreadCount > 99 ? '99+' : unreadCount}
             </Badge>
-          </motion.div>
+          </div>
         )}
-      </motion.div>
+      </div>
     );
   }
 
   // Expanded state - full chat interface
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+    <div
       className={`relative h-full ${overlay ? 'bg-background/80 backdrop-blur-md' : 'bg-card'} rounded-lg border border-border overflow-hidden shadow-xl ${className}`}
       data-testid="chat-embed"
     >
@@ -160,6 +145,6 @@ export default function ChatEmbed({
         title="Restream Chat"
         data-testid="chat-iframe"
       />
-    </motion.div>
+    </div>
   );
 }
