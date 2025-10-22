@@ -24,6 +24,11 @@ Create a live crypto market dashboard that can be used for streaming with multip
 
 ## Recent Changes
 **Date: 2025-10-22**
+- **Twitter List Integration**: Updated backend to fetch tweets from curated Twitter List
+  - Now using Twitter API v2 List endpoint: `/2/lists/1731964315962417340/tweets`
+  - Replaced generic hashtag search with curated list of crypto influencers
+  - List URL: https://x.com/i/lists/1731964315962417340
+  - Provides higher quality, hand-picked crypto tweets instead of broad search results
 - **Task 4 Complete**: Added interactive chat controls with minimize/expand and repositioning
   - Implemented minimize/expand toggle button in chat header
   - Created minimized state as compact circular button (h-14 w-14) with MessageSquare icon
@@ -94,7 +99,7 @@ Create a live crypto market dashboard that can be used for streaming with multip
 **Data Sources:**
 - CoinGecko API (free tier) - Crypto market data
 - CryptoPanic API (public feed) - Crypto news
-- Twitter API v2 - Crypto-related tweets
+- Twitter API v2 List endpoint - Curated tweets from crypto influencers (List ID: 1731964315962417340)
 
 ### Shared Types (`shared/schema.ts`)
 - `CryptoPrice` - Crypto price data with sparklines
