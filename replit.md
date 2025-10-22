@@ -6,7 +6,7 @@ A professional broadcast-quality crypto streaming dashboard with real-time price
 ## Purpose
 Create a live crypto market dashboard that can be used for streaming with multiple layout modes:
 - Full Dashboard: Complete 3-column view with prices, news, and tweets
-- Stream + Sidebar: Main stream area with data sidebar
+- Stream + Sidebar: Live Restream chat embed with data sidebar
 - Video Overlay: Minimal overlay for OBS with ticker and logo
 
 ## Current State
@@ -15,12 +15,22 @@ Create a live crypto market dashboard that can be used for streaming with multip
 - ✅ CoinGecko API for BTC, ETH, BNB, SOL prices
 - ✅ CryptoPanic news feed integration
 - ✅ Twitter API integration for crypto tweets
-- ✅ Auto-switching layout system (45s intervals)
+- ✅ Restream chat integration for live viewer interaction
+- ✅ Auto-switching layout system (configurable 15-300s intervals)
+- ✅ Keyboard shortcuts for layout control
+- ✅ OBS browser source integration guide
 - ✅ CNBC-inspired broadcast design
 - ✅ Responsive animations and transitions
 
 ## Recent Changes
 **Date: 2025-10-22**
+- **Task 3 Complete**: Integrated Restream chat embed for live stream interaction
+  - Created ChatEmbed component with Restream chat iframe
+  - Embedded live chat into stream-sidebar layout (replaces placeholder stream area)
+  - Chat displays with "Live Chat" header and LIVE indicator
+  - Uses VITE_RESTREAM_CHAT_TOKEN environment variable with fallback
+  - Maintains full layout switching and keyboard shortcut functionality
+  - E2E testing confirms proper iframe rendering and layout integration
 - **Task 2 Complete**: Implemented custom layout timing controls and keyboard shortcuts
   - Added SettingsPanel with configurable auto-switch interval (15-300s slider)
   - Implemented smart keyboard shortcuts: 1/2/3 for manual layout selection, Space for auto-switch toggle
@@ -55,6 +65,7 @@ Create a live crypto market dashboard that can be used for streaming with multip
 - `TickerBar.tsx` - Scrolling ticker bar for bottom overlay
 - `LayoutSwitcher.tsx` - Layout mode switcher with auto-switch toggle
 - `SettingsPanel.tsx` - Configurable auto-switch interval with slider control
+- `ChatEmbed.tsx` - Restream chat iframe embed for live stream interaction
 - `LiveIndicator.tsx` - WebSocket connection status
 - `LoadingState.tsx` - Beautiful loading skeletons
 - `OBSGuide.tsx` - Complete OBS integration documentation page
@@ -111,17 +122,19 @@ Create a live crypto market dashboard that can be used for streaming with multip
 - `TWITTER_BEARER_TOKEN` - Twitter API Bearer Token
 - `TWITTER_API_KEY` - Twitter API Key
 - `TWITTER_API_SECRET` - Twitter API Secret
+- `VITE_RESTREAM_CHAT_TOKEN` - Restream chat embed token (optional, has fallback)
 
 ## Key Features
 1. **Real-time Price Feeds** - WebSocket updates every 30s
 2. **Breaking News Rotation** - Auto-rotates every 10s
 3. **Twitter Integration** - Live crypto tweets with rotation
-4. **Layout Auto-Switching** - TV news network style transitions with configurable intervals (15-300s)
-5. **Keyboard Shortcuts** - Quick layout switching (1/2/3 keys) and auto-switch control (Space key)
-6. **OBS Integration** - Complete browser source setup guide with streaming presets
-7. **Streaming Optimized** - Multiple layouts for OBS/Streamlabs including ticker-only mode
-8. **Professional Design** - CNBC-inspired broadcast aesthetic
-9. **Responsive Animations** - Smooth transitions and micro-interactions
+4. **Restream Chat Integration** - Live chat embed in stream-sidebar layout for viewer interaction
+5. **Layout Auto-Switching** - TV news network style transitions with configurable intervals (15-300s)
+6. **Keyboard Shortcuts** - Quick layout switching (1/2/3 keys) and auto-switch control (Space key)
+7. **OBS Integration** - Complete browser source setup guide with streaming presets
+8. **Streaming Optimized** - Multiple layouts for OBS/Streamlabs including ticker-only mode
+9. **Professional Design** - CNBC-inspired broadcast aesthetic
+10. **Responsive Animations** - Smooth transitions and micro-interactions
 
 ## Technical Stack
 - **Frontend**: React, TypeScript, TailwindCSS, Framer Motion, Wouter
