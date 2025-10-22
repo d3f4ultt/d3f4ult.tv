@@ -33,8 +33,12 @@ export default function Dashboard() {
   const [currentNewsIndex, setCurrentNewsIndex] = useState(0);
   const [currentTweetIndex, setCurrentTweetIndex] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false); // Track settings dialog state
+  const [chatMinimized, setChatMinimized] = useState(false); // Chat minimized state
+  const [chatPosition, setChatPosition] = useState<'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'>('bottom-right'); // Chat position
+  const [chatUnreadCount, setChatUnreadCount] = useState(0); // Unread message count
   const wsRef = useRef<WebSocket | null>(null);
   const autoResumeTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Track auto-resume timeout
+  const chatNotificationIntervalRef = useRef<NodeJS.Timeout | null>(null); // Track notification interval
 
   // Initial data fetch with proper error handling
   const { data: pricesData, isLoading: pricesLoading, error: pricesError } = useQuery<CryptoPrice[]>({
@@ -253,6 +257,39 @@ export default function Dashboard() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [autoSwitch, settingsOpen]);
 
+  // Simulate notifications when chat is minimized
+  useEffect(() => {
+    if (chatMinimized) {
+      // Simulate new messages arriving every 8-15 seconds
+      const interval = setInterval(() => {
+        setChatUnreadCount(prev => prev + Math.floor(Math.random() * 3) + 1);
+      }, Math.random() * 7000 + 8000);
+      
+      chatNotificationIntervalRef.current = interval;
+      
+      return () => {
+        if (chatNotificationIntervalRef.current) {
+          clearInterval(chatNotificationIntervalRef.current);
+        }
+      };
+    } else {
+      // Reset unread count when chat is expanded
+      setChatUnreadCount(0);
+      if (chatNotificationIntervalRef.current) {
+        clearInterval(chatNotificationIntervalRef.current);
+      }
+    }
+  }, [chatMinimized]);
+
+  // Handler functions for chat controls
+  const handleChatToggle = () => {
+    setChatMinimized(!chatMinimized);
+  };
+
+  const handleChatPositionChange = (position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left') => {
+    setChatPosition(position);
+  };
+
   const isLoading = pricesLoading && newsLoading && tweetsLoading;
   const hasErrors = pricesError || newsError || tweetsError;
 
@@ -405,8 +442,23 @@ export default function Dashboard() {
             </div>
 
             {/* Floating Chat Overlay */}
-            <div className="absolute bottom-6 right-6 w-80 h-96 pointer-events-auto" data-testid="chat-overlay-container">
-              <ChatEmbed overlay={true} />
+            <div 
+              className={`absolute pointer-events-auto ${
+                chatPosition === 'bottom-right' ? 'bottom-6 right-6' :
+                chatPosition === 'bottom-left' ? 'bottom-6 left-6' :
+                chatPosition === 'top-right' ? 'top-6 right-6' :
+                'top-6 left-6'
+              } ${chatMinimized ? 'w-auto h-auto' : 'w-80 h-96'}`}
+              data-testid="chat-overlay-container"
+            >
+              <ChatEmbed 
+                overlay={true}
+                minimized={chatMinimized}
+                position={chatPosition}
+                unreadCount={chatUnreadCount}
+                onToggle={handleChatToggle}
+                onPositionChange={handleChatPositionChange}
+              />
             </div>
           </div>
           
