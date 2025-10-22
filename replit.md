@@ -6,7 +6,7 @@ A professional broadcast-quality crypto streaming dashboard with real-time price
 ## Purpose
 Create a live crypto market dashboard that can be used for streaming with multiple layout modes:
 - Full Dashboard: Complete 3-column view with prices, news, and tweets
-- Stream + Sidebar: Live Restream chat embed with data sidebar
+- Stream + Sidebar: Stream area with floating chat overlay (bottom-right) and data sidebar
 - Video Overlay: Minimal overlay for OBS with ticker and logo
 
 ## Current State
@@ -26,11 +26,13 @@ Create a live crypto market dashboard that can be used for streaming with multip
 **Date: 2025-10-22**
 - **Task 3 Complete**: Integrated Restream chat embed for live stream interaction
   - Created ChatEmbed component with Restream chat iframe
-  - Embedded live chat into stream-sidebar layout (replaces placeholder stream area)
+  - Chat appears as compact, semi-transparent overlay in stream-sidebar layout (320x384px)
+  - Positioned at bottom-right corner of stream area (24px from edges)
+  - Semi-transparent background (80% opacity with backdrop blur) conserves space
   - Chat displays with "Live Chat" header and LIVE indicator
   - Uses VITE_RESTREAM_CHAT_TOKEN environment variable with fallback
   - Maintains full layout switching and keyboard shortcut functionality
-  - E2E testing confirms proper iframe rendering and layout integration
+  - E2E testing confirms proper positioning, transparency, and iframe rendering
 - **Task 2 Complete**: Implemented custom layout timing controls and keyboard shortcuts
   - Added SettingsPanel with configurable auto-switch interval (15-300s slider)
   - Implemented smart keyboard shortcuts: 1/2/3 for manual layout selection, Space for auto-switch toggle

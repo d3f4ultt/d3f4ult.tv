@@ -389,9 +389,25 @@ export default function Dashboard() {
         <TickerBar prices={prices} />
         
         <div className="flex-1 flex overflow-hidden">
-          {/* Main Chat Area */}
-          <div className="flex-1 p-4 border-r border-border">
-            <ChatEmbed className="h-full" />
+          {/* Main Stream Area */}
+          <div className="flex-1 bg-card/50 border-r border-border relative">
+            {/* Centered Text Content */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="text-center p-12">
+                <h2 className="text-4xl font-bold mb-4">Stream Content</h2>
+                <p className="text-muted-foreground text-lg mb-6">
+                  Your live stream video would appear here
+                </p>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                  This area is reserved for your streaming software (OBS, Streamlabs, etc.) to capture and broadcast your content
+                </p>
+              </div>
+            </div>
+
+            {/* Floating Chat Overlay */}
+            <div className="absolute bottom-6 right-6 w-80 h-96 pointer-events-auto" data-testid="chat-overlay-container">
+              <ChatEmbed overlay={true} />
+            </div>
           </div>
           
           {/* Sidebar with Data */}
