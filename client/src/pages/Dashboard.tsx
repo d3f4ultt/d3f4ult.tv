@@ -427,19 +427,16 @@ export default function Dashboard() {
         
         <div className="flex-1 flex overflow-hidden">
           {/* Main Stream Area */}
-          <div className="flex-1 bg-card/50 border-r border-border relative">
-            {/* Centered Text Content */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="text-center p-12">
-                <h2 className="text-4xl font-bold mb-4">Stream Content</h2>
-                <p className="text-muted-foreground text-lg mb-6">
-                  Your live stream video would appear here
-                </p>
-                <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                  This area is reserved for your streaming software (OBS, Streamlabs, etc.) to capture and broadcast your content
-                </p>
-              </div>
-            </div>
+          <div className="flex-1 bg-black border-r border-border relative">
+            {/* Pump.fun Stream Embed */}
+            <iframe
+              src="https://pump.fun/coin/9Nj6tECrp3BG2jtMkjgkSd9Cast5nrRAQw5RBDp5pump"
+              className="absolute inset-0 w-full h-full border-0"
+              allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+              allowFullScreen
+              data-testid="stream-iframe"
+              title="Pump.fun Live Stream"
+            />
 
             {/* Floating Chat Overlay */}
             <div 

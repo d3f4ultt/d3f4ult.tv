@@ -14,7 +14,8 @@ Create a live crypto market dashboard that can be used for streaming with multip
 - ✅ Real-time WebSocket integration
 - ✅ CoinGecko API for BTC, ETH, BNB, SOL prices
 - ✅ CryptoPanic news feed integration
-- ✅ Twitter API integration for crypto tweets
+- ✅ Twitter List integration for curated crypto influencer tweets
+- ✅ Pump.fun live stream embed in stream-sidebar layout
 - ✅ Restream chat integration for live viewer interaction
 - ✅ Auto-switching layout system (configurable 15-300s intervals)
 - ✅ Keyboard shortcuts for layout control
@@ -23,6 +24,14 @@ Create a live crypto market dashboard that can be used for streaming with multip
 - ✅ Responsive animations and transitions
 
 ## Recent Changes
+**Date: 2025-10-28**
+- **Pump.fun Stream Integration**: Added live stream embed in stream-sidebar layout
+  - Integrated pump.fun coin page: https://pump.fun/coin/9Nj6tECrp3BG2jtMkjgkSd9Cast5nrRAQw5RBDp5pump
+  - Stream appears as full-screen iframe in main stream area
+  - Floating chat overlay remains functional over the embedded stream
+  - OBS streaming credentials configured (RTMPS to LiveKit backend)
+  - Perfect for broadcasting crypto content with live market data sidebar
+
 **Date: 2025-10-22**
 - **Twitter List Integration**: Updated backend to fetch tweets from curated Twitter List
   - Now using Twitter API v2 List endpoint: `/2/lists/1731964315962417340/tweets`
