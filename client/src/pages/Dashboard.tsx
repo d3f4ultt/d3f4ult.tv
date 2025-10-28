@@ -428,16 +428,14 @@ export default function Dashboard() {
         <div className="flex-1 flex overflow-hidden">
           {/* Main Stream Area */}
           <div className="flex-1 bg-black border-r border-border relative">
-            {/* Pump.fun Stream Embed */}
+            {/* Pump.fun Stream Embed - Minimal view */}
             <iframe
-              src="https://pump.fun/coin/9Nj6tECrp3BG2jtMkjgkSd9Cast5nrRAQw5RBDp5pump"
+              src="https://pump.fun/coin/9Nj6tECrp3BG2jtMkjgkSd9Cast5nrRAQw5RBDp5pump?embed=true"
               className="absolute inset-0 w-full h-full border-0"
               allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
               allowFullScreen
               data-testid="stream-iframe"
               title="Pump.fun Live Stream"
-              onLoad={() => console.log('Pump.fun iframe loaded successfully')}
-              onError={(e) => console.error('Pump.fun iframe error:', e)}
               sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
             />
 
