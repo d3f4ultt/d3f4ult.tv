@@ -12,6 +12,7 @@ import { LiveIndicator } from "@/components/LiveIndicator";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { LoadingState, PriceCardSkeleton, NewsCardSkeleton, TweetCardSkeleton } from "@/components/LoadingState";
 import ChatEmbed from "@/components/ChatEmbed";
+import { PumpFunWidget } from "@/components/PumpFunWidget";
 import type { CryptoPrice, NewsArticle, Tweet, LayoutMode, WSMessage } from "@shared/schema";
 
 export default function Dashboard() {
@@ -460,10 +461,10 @@ export default function Dashboard() {
             </div>
           </div>
           
-          {/* Sidebar with Data */}
-          <div className="w-96 bg-background overflow-y-auto p-6 space-y-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold">Live Data</h2>
+          {/* Sidebar with Pump.fun Price Widget */}
+          <div className="w-96 bg-background border-l border-border overflow-hidden">
+            <div className="p-4 border-b border-border flex items-center justify-between">
+              <h2 className="text-lg font-bold">Pump.fun Live</h2>
               <div className="flex items-center gap-2">
                 <SettingsPanel 
                   autoSwitchInterval={autoSwitchInterval}
@@ -471,32 +472,9 @@ export default function Dashboard() {
                   open={settingsOpen}
                   onOpenChange={setSettingsOpen}
                 />
-                <LiveIndicator connected={wsConnected} />
               </div>
             </div>
-            
-            {/* Compact Prices */}
-            <div className="space-y-3">
-              {prices.slice(0, 2).map((crypto) => (
-                <PriceTickerCard key={crypto.id} crypto={crypto} />
-              ))}
-            </div>
-            
-            {/* Latest News */}
-            <div>
-              <h3 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Latest News</h3>
-              {news.slice(0, 2).map((article) => (
-                <NewsCard key={article.id} article={article} />
-              ))}
-            </div>
-            
-            {/* Latest Tweet */}
-            <div>
-              <h3 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Latest Tweets</h3>
-              {tweets.slice(0, 2).map((tweet) => (
-                <TweetCard key={tweet.id} tweet={tweet} />
-              ))}
-            </div>
+            <PumpFunWidget />
           </div>
         </div>
       </div>

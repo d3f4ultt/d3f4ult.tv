@@ -16,6 +16,7 @@ Create a live crypto market dashboard that can be used for streaming with multip
 - ✅ CryptoPanic news feed integration
 - ✅ Twitter List integration for curated crypto influencer tweets
 - ✅ Pump.fun live stream embed in stream-sidebar layout
+- ✅ Custom Pump.fun price widget with real-time trades (PumpPortal API)
 - ✅ Restream chat integration for live viewer interaction
 - ✅ Auto-switching layout system (configurable 15-300s intervals)
 - ✅ Keyboard shortcuts for layout control
@@ -25,6 +26,15 @@ Create a live crypto market dashboard that can be used for streaming with multip
 
 ## Recent Changes
 **Date: 2025-10-28**
+- **Custom Pump.fun Widget**: Replaced generic sidebar with real-time pump.fun price widget
+  - Built custom PumpFunWidget component using PumpPortal's free WebSocket API (`wss://pumpportal.fun/api/data`)
+  - Subscribes to live trades for token: `9Nj6tECrp3BG2jtMkjgkSd9Cast5nrRAQw5RBDp5pump`
+  - Displays real-time price updates, 24h price change %, and 24h volume in SOL
+  - Includes mini bar chart showing last 50 price points
+  - Shows recent trades feed with buy/sell indicators, amounts, and timestamps
+  - Widget auto-reconnects on disconnect with 5s timeout
+  - Stream-sidebar layout now shows: pump.fun iframe (video) + custom price widget (sidebar)
+  - Widget displays connection status indicator (green pulse when connected)
 - **Pump.fun Stream Integration**: Added live stream embed in stream-sidebar layout
   - Integrated pump.fun coin page: https://pump.fun/coin/9Nj6tECrp3BG2jtMkjgkSd9Cast5nrRAQw5RBDp5pump
   - Stream appears as full-screen iframe in main stream area
