@@ -436,6 +436,9 @@ export default function Dashboard() {
               allowFullScreen
               data-testid="stream-iframe"
               title="Pump.fun Live Stream"
+              onLoad={() => console.log('Pump.fun iframe loaded successfully')}
+              onError={(e) => console.error('Pump.fun iframe error:', e)}
+              sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
             />
 
             {/* Floating Chat Overlay */}
