@@ -18,6 +18,7 @@ Create a live crypto market dashboard that can be used for streaming with multip
 - ✅ Pump.fun live stream embed in stream-sidebar layout
 - ✅ Custom Pump.fun price widget with real-time trades (PumpPortal API)
 - ✅ Phantom wallet integration for Solana blockchain interactions
+- ✅ Jupiter swap widget for token swaps with best routing
 - ✅ Restream chat integration for live viewer interaction
 - ✅ Auto-switching layout system (configurable 15-300s intervals)
 - ✅ Keyboard shortcuts for layout control
@@ -27,15 +28,26 @@ Create a live crypto market dashboard that can be used for streaming with multip
 
 ## Recent Changes
 **Date: 2025-10-29**
-- **Phantom Wallet Integration**: Added Solana wallet connection functionality
-  - Created custom WalletButton component with direct Phantom wallet API integration
+- **Jupiter Swap Integration**: Added official Jupiter Terminal swap widget
+  - Integrated using Jupiter Terminal v2 script from terminal.jup.ag
+  - Modal-based swap interface with "Swap Tokens" button in header
+  - Full wallet passthrough support - reuses Phantom connection seamlessly
+  - Supports all Solana tokens with Jupiter's best routing
+  - Uses enableWalletPassthrough with complete wallet adapter context
+  - Auto-syncs wallet state changes with Jupiter Terminal
+  - Located in Dashboard header next to wallet connection
+- **Phantom Wallet Integration**: Official Solana wallet adapter implementation
+  - Uses official @solana/wallet-adapter-react for industry-standard integration
+  - WalletProvider wraps entire app with ConnectionProvider and WalletProvider
+  - PhantomWalletAdapter configured with mainnet endpoint
+  - WalletButton uses useWallet() hook for all operations (connect, disconnect, select)
   - Connect/disconnect functionality with one-click authentication
   - Displays formatted wallet address (e.g., "A1b2...c3d4") when connected
   - Live connection indicator (green pulse) for active wallet
-  - Auto-reconnects on wallet account changes
+  - Proper error handling with WalletNotFoundError detection
   - Prompts users to install Phantom if not detected
   - Located in Dashboard header for easy access across all layout modes
-  - Uses @solana/web3.js for Solana blockchain interactions
+  - Full TypeScript types and multi-wallet support built-in
 
 **Date: 2025-10-28**
 - **Custom Pump.fun Widget**: Replaced generic sidebar with real-time pump.fun price widget

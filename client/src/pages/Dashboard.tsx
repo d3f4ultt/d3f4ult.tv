@@ -14,6 +14,7 @@ import { LoadingState, PriceCardSkeleton, NewsCardSkeleton, TweetCardSkeleton } 
 import ChatEmbed from "@/components/ChatEmbed";
 import { PumpFunWidget } from "@/components/PumpFunWidget";
 import { WalletButton } from "@/components/WalletButton";
+import { JupiterSwap } from "@/components/JupiterSwap";
 import type { CryptoPrice, NewsArticle, Tweet, LayoutMode, WSMessage } from "@shared/schema";
 
 export default function Dashboard() {
@@ -339,6 +340,7 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center gap-3">
               <WalletButton />
+              <JupiterSwap />
               <Link href="/obs-guide">
                 <Button variant="outline" size="sm" data-testid="button-obs-guide">
                   <BookOpen className="w-4 h-4 mr-2" />
