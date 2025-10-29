@@ -467,15 +467,19 @@ export default function Dashboard() {
           
           {/* Sidebar with Pump.fun Price Widget */}
           <div className="w-96 bg-background border-l border-border overflow-hidden">
-            <div className="p-4 border-b border-border flex items-center justify-between">
-              <h2 className="text-lg font-bold">Pump.fun Live</h2>
-              <div className="flex items-center gap-2">
+            <div className="p-4 border-b border-border flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold">Pump.fun Live</h2>
                 <SettingsPanel 
                   autoSwitchInterval={autoSwitchInterval}
                   onIntervalChange={setAutoSwitchInterval}
                   open={settingsOpen}
                   onOpenChange={setSettingsOpen}
                 />
+              </div>
+              <div className="flex flex-col gap-2">
+                <WalletButton />
+                <JupiterSwap />
               </div>
             </div>
             <PumpFunWidget />
