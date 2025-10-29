@@ -17,6 +17,7 @@ Create a live crypto market dashboard that can be used for streaming with multip
 - ✅ Twitter List integration for curated crypto influencer tweets
 - ✅ Pump.fun live stream embed in stream-sidebar layout
 - ✅ Custom Pump.fun price widget with real-time trades (PumpPortal API)
+- ✅ Phantom wallet integration for Solana blockchain interactions
 - ✅ Restream chat integration for live viewer interaction
 - ✅ Auto-switching layout system (configurable 15-300s intervals)
 - ✅ Keyboard shortcuts for layout control
@@ -25,6 +26,17 @@ Create a live crypto market dashboard that can be used for streaming with multip
 - ✅ Responsive animations and transitions
 
 ## Recent Changes
+**Date: 2025-10-29**
+- **Phantom Wallet Integration**: Added Solana wallet connection functionality
+  - Created custom WalletButton component with direct Phantom wallet API integration
+  - Connect/disconnect functionality with one-click authentication
+  - Displays formatted wallet address (e.g., "A1b2...c3d4") when connected
+  - Live connection indicator (green pulse) for active wallet
+  - Auto-reconnects on wallet account changes
+  - Prompts users to install Phantom if not detected
+  - Located in Dashboard header for easy access across all layout modes
+  - Uses @solana/web3.js for Solana blockchain interactions
+
 **Date: 2025-10-28**
 - **Custom Pump.fun Widget**: Replaced generic sidebar with real-time pump.fun price widget
   - Built custom PumpFunWidget component using PumpPortal's free WebSocket API (`wss://pumpportal.fun/api/data`)

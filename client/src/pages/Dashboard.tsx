@@ -13,6 +13,7 @@ import { SettingsPanel } from "@/components/SettingsPanel";
 import { LoadingState, PriceCardSkeleton, NewsCardSkeleton, TweetCardSkeleton } from "@/components/LoadingState";
 import ChatEmbed from "@/components/ChatEmbed";
 import { PumpFunWidget } from "@/components/PumpFunWidget";
+import { WalletButton } from "@/components/WalletButton";
 import type { CryptoPrice, NewsArticle, Tweet, LayoutMode, WSMessage } from "@shared/schema";
 
 export default function Dashboard() {
@@ -337,6 +338,7 @@ export default function Dashboard() {
               <p className="text-muted-foreground">Real-time market dashboard</p>
             </div>
             <div className="flex items-center gap-3">
+              <WalletButton />
               <Link href="/obs-guide">
                 <Button variant="outline" size="sm" data-testid="button-obs-guide">
                   <BookOpen className="w-4 h-4 mr-2" />
