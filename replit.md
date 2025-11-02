@@ -23,10 +23,28 @@ Create a live crypto market dashboard that can be used for streaming with multip
 - ✅ Auto-switching layout system (configurable 15-300s intervals)
 - ✅ Keyboard shortcuts for layout control
 - ✅ OBS browser source integration guide
+- ✅ Custom RTMP streaming server with HLS transcoding
+- ✅ Stream key management and authentication
 - ✅ CNBC-inspired broadcast design
 - ✅ Responsive animations and transitions
 
 ## Recent Changes
+**Date: 2025-11-02**
+- **Custom RTMP Streaming Server**: Implemented self-hosted live streaming infrastructure
+  - Built complete RTMP ingest server using node-media-server (v4.1.0)
+  - Accepts RTMP streams from OBS Studio on port 1935
+  - Automatic transcoding to HLS format using FFmpeg for browser playback
+  - HLS delivery via HTTP server on port 8888
+  - Stream key authentication system with validation
+  - Real-time stream status monitoring (active/offline detection)
+  - Created StreamPlayer component with video.js for HLS playback
+  - Built StreamControls UI with stream key management and copy-to-clipboard
+  - Integrated into stream-sidebar layout replacing pump.fun embed
+  - Added comprehensive RTMP streaming guide to OBS Setup page
+  - Stream latency: 6-10 seconds (HLS protocol standard)
+  - Supports multiple concurrent streams with unique stream keys
+  - Auto-reconnect handling for interrupted streams
+
 **Date: 2025-10-29**
 - **Jupiter Swap Integration**: Added official Jupiter Terminal swap widget
   - Integrated using Jupiter Terminal v2 script from terminal.jup.ag
@@ -123,6 +141,8 @@ Create a live crypto market dashboard that can be used for streaming with multip
 - `TweetCard.tsx` - Twitter feed cards with verified badges
 - `TickerBar.tsx` - Scrolling ticker bar for bottom overlay
 - `LayoutSwitcher.tsx` - Layout mode switcher with auto-switch toggle
+- `StreamPlayer.tsx` - HLS video player with video.js for live streams
+- `StreamControls.tsx` - Stream key management and status indicator
 - `SettingsPanel.tsx` - Configurable auto-switch interval with slider control
 - `ChatEmbed.tsx` - Restream chat iframe embed for live stream interaction
 - `LiveIndicator.tsx` - WebSocket connection status
@@ -137,7 +157,17 @@ Create a live crypto market dashboard that can be used for streaming with multip
 - `GET /api/crypto/prices` - Fetch BTC, ETH, BNB, SOL prices from CoinGecko
 - `GET /api/news` - Fetch crypto news from CryptoPanic
 - `GET /api/tweets` - Fetch crypto tweets from Twitter API v2
+- `GET /api/stream/config` - Get RTMP server configuration and stream key
+- `GET /api/stream/status` - Check if stream is currently active
+- `POST /api/stream/generate-key` - Generate new stream key
 - `WebSocket /ws` - Real-time updates for all data types
+
+**RTMP Media Server (`server/mediaServer.ts`):**
+- RTMP ingest on port 1935 (`rtmp://host:1935/live/{stream-key}`)
+- HLS output on port 8888 (`http://host:8888/live/{stream-key}/index.m3u8`)
+- Stream key authentication and validation
+- Real-time stream monitoring and status updates
+- FFmpeg-powered HLS transcoding with configurable settings
 
 **Data Sources:**
 - CoinGecko API (free tier) - Crypto market data
@@ -187,13 +217,15 @@ Create a live crypto market dashboard that can be used for streaming with multip
 1. **Real-time Price Feeds** - WebSocket updates every 30s
 2. **Breaking News Rotation** - Auto-rotates every 10s
 3. **Twitter Integration** - Live crypto tweets with rotation
-4. **Interactive Chat Overlay** - Restream chat with minimize/expand, 4-corner repositioning, and notification badges
-5. **Layout Auto-Switching** - TV news network style transitions with configurable intervals (15-300s)
-6. **Keyboard Shortcuts** - Quick layout switching (1/2/3 keys) and auto-switch control (Space key)
-7. **OBS Integration** - Complete browser source setup guide with streaming presets
-8. **Streaming Optimized** - Multiple layouts for OBS/Streamlabs including ticker-only mode
-9. **Professional Design** - CNBC-inspired broadcast aesthetic
-10. **Responsive Animations** - Smooth transitions and micro-interactions
+4. **Custom RTMP Streaming** - Self-hosted live streaming server with HLS delivery
+5. **Stream Key Management** - Secure authentication with copy-to-clipboard controls
+6. **Interactive Chat Overlay** - Restream chat with minimize/expand, 4-corner repositioning, and notification badges
+7. **Layout Auto-Switching** - TV news network style transitions with configurable intervals (15-300s)
+8. **Keyboard Shortcuts** - Quick layout switching (1/2/3 keys) and auto-switch control (Space key)
+9. **OBS Integration** - Complete browser source setup guide with RTMP streaming instructions
+10. **Streaming Optimized** - Multiple layouts for OBS/Streamlabs including ticker-only mode
+11. **Professional Design** - CNBC-inspired broadcast aesthetic
+12. **Responsive Animations** - Smooth transitions and micro-interactions
 
 ## Technical Stack
 - **Frontend**: React, TypeScript, TailwindCSS, Framer Motion, Wouter

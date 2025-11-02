@@ -191,6 +191,109 @@ export default function OBSGuide() {
           </div>
         </div>
 
+        {/* RTMP Streaming Section */}
+        <Card className="border-primary">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Badge variant="default">NEW</Badge>
+              Custom RTMP Streaming
+            </CardTitle>
+            <CardDescription>
+              Stream directly to your dashboard via OBS (no third-party services needed)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+              <h3 className="font-semibold mb-2">What is RTMP Streaming?</h3>
+              <p className="text-sm text-muted-foreground">
+                Instead of embedding external streams (like pump.fun), you can now stream your own content directly from OBS to the dashboard. 
+                Your stream appears in the "Stream + Sidebar" layout with real-time crypto data alongside it.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">OBS Stream Settings</h3>
+              
+              <div className="space-y-3">
+                <div className="flex gap-4">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm flex-shrink-0">
+                    1
+                  </div>
+                  <div className="space-y-2 flex-1">
+                    <h4 className="font-medium">Open OBS Settings</h4>
+                    <p className="text-sm text-muted-foreground">
+                      File → Settings → Stream
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm flex-shrink-0">
+                    2
+                  </div>
+                  <div className="space-y-2 flex-1">
+                    <h4 className="font-medium">Select Custom Service</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Service: <span className="font-mono bg-muted px-2 py-0.5 rounded">Custom...</span>
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Server: <span className="font-mono bg-muted px-2 py-0.5 rounded">rtmp://{window.location.hostname}:1935/live</span>
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Stream Key: <span className="font-mono bg-muted px-2 py-0.5 rounded">(Get from dashboard sidebar)</span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm flex-shrink-0">
+                    3
+                  </div>
+                  <div className="space-y-2 flex-1">
+                    <h4 className="font-medium">Configure Output Settings</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Settings → Output → Streaming
+                    </p>
+                    <ul className="text-sm text-muted-foreground space-y-1 ml-4 list-disc">
+                      <li>Video Bitrate: <span className="font-medium">2500-4500 Kbps</span></li>
+                      <li>Encoder: <span className="font-medium">x264 or hardware (NVENC/QuickSync)</span></li>
+                      <li>Keyframe Interval: <span className="font-medium">2 seconds</span></li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm flex-shrink-0">
+                    4
+                  </div>
+                  <div className="space-y-2 flex-1">
+                    <h4 className="font-medium">Start Streaming</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Click "Start Streaming" in OBS. Your stream will appear in the Stream + Sidebar layout automatically.
+                      Switch to layout mode 2 or press the "2" key to view it.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4">
+              <h4 className="font-semibold text-amber-600 dark:text-amber-400 mb-2 flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                Important Notes
+              </h4>
+              <ul className="text-sm text-muted-foreground space-y-1 list-disc ml-5">
+                <li>Stream latency is typically 6-10 seconds (HLS protocol)</li>
+                <li>Your stream key is shown in the dashboard sidebar when in "Stream + Sidebar" layout</li>
+                <li>Port 1935 must be accessible (not blocked by firewall)</li>
+                <li>Streams are automatically converted to HLS for browser playback</li>
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Advanced Settings */}
         <Card>
           <CardHeader>

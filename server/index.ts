@@ -56,6 +56,14 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
+  // Initialize RTMP media server
+  try {
+    const { startMediaServer } = await import('./mediaServer');
+    startMediaServer();
+  } catch (error) {
+    log(`Failed to start media server: ${error}`);
+  }
+
   // ALWAYS serve the app on the port specified in the environment variable PORT
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.

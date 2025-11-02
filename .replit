@@ -4,6 +4,7 @@ hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-24_05"
+packages = ["ffmpeg"]
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -11,8 +12,16 @@ build = ["npm", "run", "build"]
 run = ["npm", "run", "start"]
 
 [[ports]]
+localPort = 1935
+externalPort = 5173
+
+[[ports]]
 localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 8888
+externalPort = 5000
 
 [[ports]]
 localPort = 35547
@@ -29,6 +38,10 @@ externalPort = 3000
 [[ports]]
 localPort = 43119
 externalPort = 3002
+
+[[ports]]
+localPort = 45845
+externalPort = 4200
 
 [env]
 PORT = "5000"

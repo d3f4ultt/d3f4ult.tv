@@ -223,6 +223,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Stream management API routes
+  app.get('/api/stream/config', async (_req, res) => {
+    try {
+      const { getMediaServerConfig } = await import('./mediaServer');
+      const config = getMediaServerConfig();
+      res.json(config);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to get stream config' });
+    }
+  });
+
+  app.get('/api/stream/status', async (req, res) => {
+    try {
+      const { isStreamActive, getDefaultStreamKey } = await import('./mediaServer');
+      const streamKey = (req.query.key as string) || getDefaultStreamKey();
+      const active = isStreamActive(streamKey);
+      res.json({ streamKey, active });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to get stream status' });
+    }
+  });
+
+  app.post('/api/stream/generate-key', async (_req, res) => {
+    try {
+      const { generateStreamKey } = await import('./mediaServer');
+      const newKey = generateStreamKey();
+      res.json({ streamKey: newKey });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to generate stream key' });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // WebSocket server for real-time updates

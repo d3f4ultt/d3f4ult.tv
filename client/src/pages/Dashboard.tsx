@@ -15,6 +15,8 @@ import ChatEmbed from "@/components/ChatEmbed";
 import { PumpFunWidget } from "@/components/PumpFunWidget";
 import { WalletButton } from "@/components/WalletButton";
 import { JupiterSwap } from "@/components/JupiterSwap";
+import { StreamPlayer } from "@/components/StreamPlayer";
+import { StreamControls } from "@/components/StreamControls";
 import type { CryptoPrice, NewsArticle, Tweet, LayoutMode, WSMessage } from "@shared/schema";
 
 export default function Dashboard() {
@@ -39,6 +41,7 @@ export default function Dashboard() {
   const [chatMinimized, setChatMinimized] = useState(false); // Chat minimized state
   const [chatPosition, setChatPosition] = useState<'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'>('bottom-right'); // Chat position
   const [chatUnreadCount, setChatUnreadCount] = useState(0); // Unread message count
+  const [streamKey, setStreamKey] = useState<string>('defaultStreamKey'); // Current stream key
   const wsRef = useRef<WebSocket | null>(null);
   const autoResumeTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Track auto-resume timeout
   const chatNotificationIntervalRef = useRef<NodeJS.Timeout | null>(null); // Track notification interval
@@ -62,12 +65,24 @@ export default function Dashboard() {
     retry: 3,
   });
 
+  // Fetch stream configuration
+  const { data: streamConfig } = useQuery<{ rtmpPort: number; hlsPort: number; defaultStreamKey: string }>({
+    queryKey: ['/api/stream/config'],
+    refetchInterval: false,
+  });
+
   // Update state when data changes - with proper synchronization
   useEffect(() => {
     if (pricesData !== undefined) {
       setPrices(pricesData);
     }
   }, [pricesData]);
+
+  useEffect(() => {
+    if (streamConfig?.defaultStreamKey) {
+      setStreamKey(streamConfig.defaultStreamKey);
+    }
+  }, [streamConfig]);
 
   useEffect(() => {
     if (newsData !== undefined) {
@@ -431,17 +446,12 @@ export default function Dashboard() {
         <TickerBar prices={prices} />
         
         <div className="flex-1 flex overflow-hidden">
-          {/* Main Stream Area */}
+          {/* Main Stream Area - Custom RTMP Stream */}
           <div className="flex-1 bg-black border-r border-border relative">
-            {/* Pump.fun Stream Embed - Minimal view */}
-            <iframe
-              src="https://pump.fun/coin/9Nj6tECrp3BG2jtMkjgkSd9Cast5nrRAQw5RBDp5pump?embed=true"
-              className="absolute inset-0 w-full h-full border-0"
-              allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-              allowFullScreen
-              data-testid="stream-iframe"
-              title="Pump.fun Live Stream"
-              sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+            <StreamPlayer 
+              streamKey={streamKey}
+              hlsPort={streamConfig?.hlsPort || 8888}
+              className="absolute inset-0"
             />
 
             {/* Floating Chat Overlay */}
@@ -465,11 +475,11 @@ export default function Dashboard() {
             </div>
           </div>
           
-          {/* Sidebar with Pump.fun Price Widget */}
-          <div className="w-96 bg-background border-l border-border overflow-hidden">
+          {/* Sidebar with Stream Controls */}
+          <div className="w-96 bg-background border-l border-border overflow-y-auto">
             <div className="p-4 border-b border-border flex flex-col gap-3">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold">Pump.fun Live</h2>
+                <h2 className="text-lg font-bold">Live Stream</h2>
                 <SettingsPanel 
                   autoSwitchInterval={autoSwitchInterval}
                   onIntervalChange={setAutoSwitchInterval}
@@ -482,7 +492,13 @@ export default function Dashboard() {
                 <JupiterSwap />
               </div>
             </div>
-            <PumpFunWidget />
+            <div className="p-4 space-y-4">
+              <StreamControls />
+              <div className="pt-4 border-t border-border">
+                <h3 className="text-sm font-medium mb-3">Pump.fun Market</h3>
+                <PumpFunWidget />
+              </div>
+            </div>
           </div>
         </div>
       </div>
