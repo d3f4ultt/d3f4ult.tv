@@ -10,6 +10,7 @@ interface StreamConfig {
   rtmpPort: number;
   hlsPort: number;
   defaultStreamKey: string;
+  enabled: boolean;
 }
 
 interface StreamStatus {
@@ -68,6 +69,34 @@ export function StreamControls() {
           <div className="flex items-center justify-center py-4">
             <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show message if RTMP is disabled (Replit environment)
+  if (!config.enabled) {
+    return (
+      <Card data-testid="stream-controls">
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">Stream Settings</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3">
+            <p className="text-xs font-medium text-amber-600 dark:text-amber-500">⚠️ RTMP Streaming Unavailable</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              RTMP streaming requires ports 1935 and 8888 which are not available in this environment (Replit).
+            </p>
+          </div>
+          <div className="rounded-lg bg-blue-500/10 border border-blue-500/20 p-3">
+            <p className="text-xs font-medium text-blue-600 dark:text-blue-500">💡 How to Enable</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Deploy this code to your own VPS server (like d3f4ult.tv) to enable custom RTMP streaming.
+            </p>
+          </div>
+          <p className="text-xs text-muted-foreground pt-2 border-t border-border">
+            In the meantime, the dashboard works perfectly for viewing crypto data, news, and tweets.
+          </p>
         </CardContent>
       </Card>
     );

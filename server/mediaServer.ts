@@ -146,12 +146,28 @@ export function initMediaServer(): NodeMediaServer {
 }
 
 export function startMediaServer(): void {
-  const server = initMediaServer();
-  server.run();
-  log(`[RTMP] Media server started on port ${config.rtmp.port}`);
-  log(`[HLS] HTTP server started on port ${config.http.port}`);
-  log(`[RTMP] Stream to: rtmp://localhost:${config.rtmp.port}/live/{your-stream-key}`);
-  log(`[HLS] Playback: http://localhost:${config.http.port}/live/{your-stream-key}/index.m3u8`);
+  // Check if RTMP streaming is disabled (for Replit or other restricted environments)
+  const isReplit = process.env.REPL_ID !== undefined || process.env.REPLIT_DEPLOYMENT !== undefined;
+  const rtmpDisabled = process.env.DISABLE_RTMP === 'true' || isReplit;
+  
+  if (rtmpDisabled) {
+    log('[RTMP] ⚠️  RTMP streaming disabled (Replit environment detected)');
+    log('[RTMP] 💡 RTMP streaming requires port 1935 which is not available on Replit');
+    log('[RTMP] ✅ Deploy to your own VPS (d3f4ult.tv) to enable RTMP streaming');
+    return;
+  }
+  
+  try {
+    const server = initMediaServer();
+    server.run();
+    log(`[RTMP] ✅ Media server started on port ${config.rtmp.port}`);
+    log(`[HLS] ✅ HTTP server started on port ${config.http.port}`);
+    log(`[RTMP] Stream to: rtmp://localhost:${config.rtmp.port}/live/{your-stream-key}`);
+    log(`[HLS] Playback: http://localhost:${config.http.port}/live/{your-stream-key}/index.m3u8`);
+  } catch (error: any) {
+    log(`[RTMP] ❌ Failed to start media server: ${error.message}`);
+    log('[RTMP] 💡 This feature requires a VPS with ports 1935 and 8888 available');
+  }
 }
 
 export function isStreamActive(streamKey: string): boolean {
@@ -162,10 +178,16 @@ export function getActiveStreams(): string[] {
   return Array.from(activeStreams);
 }
 
+export function isMediaServerEnabled(): boolean {
+  const isReplit = process.env.REPL_ID !== undefined || process.env.REPLIT_DEPLOYMENT !== undefined;
+  return process.env.DISABLE_RTMP !== 'true' && !isReplit;
+}
+
 export function getMediaServerConfig() {
   return {
     rtmpPort: config.rtmp.port,
     hlsPort: config.http.port,
-    defaultStreamKey: getDefaultStreamKey()
+    defaultStreamKey: getDefaultStreamKey(),
+    enabled: isMediaServerEnabled()
   };
 }
