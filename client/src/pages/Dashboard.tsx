@@ -308,31 +308,6 @@ export default function Dashboard() {
     setChatPosition(position);
   };
 
-  const isLoading = pricesLoading && newsLoading && tweetsLoading;
-  const hasErrors = pricesError || newsError || tweetsError;
-
-  if (isLoading) {
-    return <LoadingState message="Connecting to live market data..." />;
-  }
-
-  if (hasErrors && prices.length === 0 && news.length === 0 && tweets.length === 0) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="text-center p-8">
-          <h2 className="text-2xl font-bold mb-4">Connection Issue</h2>
-          <p className="text-muted-foreground mb-4">
-            Having trouble connecting to data sources. Retrying automatically...
-          </p>
-          <div className="flex items-center justify-center gap-2">
-            <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-            <div className="w-2 h-2 bg-primary rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
-            <div className="w-2 h-2 bg-primary rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // Full Dashboard Layout
   if (currentLayout === 'full-dashboard') {
     return (
@@ -376,22 +351,27 @@ export default function Dashboard() {
             {/* Left: Crypto Prices */}
             <div className="lg:col-span-4 space-y-4">
               <h2 className="text-xl font-bold mb-4">Live Prices</h2>
-              {prices.length > 0 ? (
+              {pricesLoading ? (
+                <><PriceCardSkeleton /><PriceCardSkeleton /></>
+              ) : pricesError ? (
+                <div className="text-red-500">Error loading prices.</div>
+              ) : prices.length > 0 ? (
                 prices.map((crypto) => (
                   <PriceTickerCard key={crypto.id} crypto={crypto} />
                 ))
               ) : (
-                <>
-                  <PriceCardSkeleton />
-                  <PriceCardSkeleton />
-                </>
+                <div className="text-muted-foreground">No price data available.</div>
               )}
             </div>
             
             {/* Center: Breaking News */}
             <div className="lg:col-span-4 space-y-4">
               <h2 className="text-xl font-bold mb-4">Breaking News</h2>
-              {news.length > 0 ? (
+              {newsLoading ? (
+                <><NewsCardSkeleton /><NewsCardSkeleton /></>
+              ) : newsError ? (
+                <div className="text-red-500">Error loading news.</div>
+              ) : news.length > 0 ? (
                 <div className="space-y-4">
                   {news.slice(currentNewsIndex, currentNewsIndex + 3).map((article, index) => (
                     <NewsCard 
@@ -402,27 +382,25 @@ export default function Dashboard() {
                   ))}
                 </div>
               ) : (
-                <>
-                  <NewsCardSkeleton />
-                  <NewsCardSkeleton />
-                </>
+                <div className="text-muted-foreground">No news available.</div>
               )}
             </div>
             
             {/* Right: Twitter Feed */}
             <div className="lg:col-span-4 space-y-4">
               <h2 className="text-xl font-bold mb-4">Notable Voices</h2>
-              {tweets.length > 0 ? (
+              {tweetsLoading ? (
+                <><TweetCardSkeleton /><TweetCardSkeleton /></>
+              ) : tweetsError ? (
+                <div className="text-red-500">Error loading tweets.</div>
+              ) : tweets.length > 0 ? (
                 <div className="space-y-3">
                   {tweets.slice(currentTweetIndex, currentTweetIndex + 4).map((tweet) => (
                     <TweetCard key={tweet.id} tweet={tweet} />
                   ))}
                 </div>
               ) : (
-                <>
-                  <TweetCardSkeleton />
-                  <TweetCardSkeleton />
-                </>
+                <div className="text-muted-foreground">No tweets available.</div>
               )}
             </div>
           </div>

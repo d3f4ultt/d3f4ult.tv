@@ -1,5 +1,8 @@
 import NodeMediaServer from 'node-media-server';
 import { log } from './vite';
+import { spawn, ChildProcess } from 'child_process';
+import path from 'path';
+import fs from 'fs';
 
 // In-memory storage for stream keys (in production, use database)
 const streamKeys = new Map<string, { userId: string; createdAt: Date; active: boolean }>();
@@ -65,15 +68,17 @@ const config = {
     chunk_size: 60000,
     gop_cache: true,  // GOP (Group of Pictures) cache for faster stream startup
     ping: 30,
-    ping_timeout: 60
+    ping_timeout: 60,
+    ip: '0.0.0.0'  // Bind to all interfaces (IPv4)
   },
   http: {
     port: 8888,  // Different from main Express port (5000)
     mediaroot: './media',  // Where HLS files are stored
-    allow_origin: '*'  // CORS for HLS playback
+    allow_origin: '*',  // CORS for HLS playback
+    ip: '0.0.0.0'  // Bind to all interfaces (IPv4)
   },
   trans: {
-    ffmpeg: '/nix/store/3zc5jbvqzrn8zmva4fx5p0nh4yy03wk4-ffmpeg-6.1.1-bin/bin/ffmpeg',  // FFmpeg path (Nix environment)
+    ffmpeg: '/usr/bin/ffmpeg',  // FFmpeg path on VPS
     tasks: [
       {
         app: 'live',  // RTMP app name
@@ -85,16 +90,13 @@ const config = {
       }
     ]
   },
-  logType: 3,  // Log to console
-  auth: {
-    play: false,  // No authentication for playback
-    publish: true,  // Require authentication for publishing
-    secret: process.env.SESSION_SECRET || 'crypto-live-stream'
-  }
+  logType: 3  // Log to console
+  // NOTE: Authentication is handled in prePublish event handler, not by node-media-server's built-in auth
 };
 
 let nms: NodeMediaServer | null = null;
 let activeStreams = new Set<string>();
+let ffmpegProcesses = new Map<string, ChildProcess>();
 
 export function initMediaServer(): NodeMediaServer {
   if (nms) {
@@ -104,45 +106,149 @@ export function initMediaServer(): NodeMediaServer {
   nms = new NodeMediaServer(config);
 
   // Authentication: Check stream key before allowing publish
-  nms.on('prePublish', (id: string, streamPath: string, args: any) => {
-    log(`[RTMP] Publish attempt - ID: ${id}, Path: ${streamPath}`);
-    
-    // Extract stream key from path: /live/{streamKey}
-    const streamKey = streamPath.split('/').pop();
-    
-    if (!streamKey || !validateStreamKey(streamKey)) {
-      log(`[RTMP] ❌ Invalid stream key: ${streamKey}`);
-      const session = nms!.getSession(id);
-      session.reject();
-      return;
+  nms.on('prePublish', (session: any) => {
+    try {
+      // node-media-server passes a session object
+      const sessionId = session.id || '';
+      const streamPath = session.streamPath || '';
+
+      log(`[RTMP] Publish attempt - ID: ${sessionId}, Path: ${streamPath}`);
+
+      // If no path provided, reject
+      if (!streamPath) {
+        log(`[RTMP] ❌ No stream path provided`);
+        session.reject();
+        return;
+      }
+
+      // Extract stream key from path: /live/{streamKey}
+      const streamKey = streamPath.split('/').pop();
+
+      if (!streamKey || !validateStreamKey(streamKey)) {
+        log(`[RTMP] ❌ Invalid stream key: ${streamKey}`);
+        log(`[RTMP] 💡 Expected key: Get from https://d3f4ult.tv (Stream Settings)`);
+        session.reject();
+        return;
+      }
+
+      log(`[RTMP] ✅ Stream authorized: ${streamKey}`);
+      activeStreams.add(streamKey);
+    } catch (error: any) {
+      log(`[RTMP] ❌ Error in prePublish handler: ${error.message}`);
+      // Reject on error
+      if (session && session.reject) {
+        session.reject();
+      }
     }
-    
-    log(`[RTMP] ✅ Stream authorized: ${streamKey}`);
-    activeStreams.add(streamKey);
   });
 
   // Handle successful publish
-  nms.on('postPublish', (id: string, streamPath: string, args: any) => {
-    const streamKey = streamPath.split('/').pop();
-    log(`[RTMP] 🎥 Stream started: ${streamKey}`);
+  nms.on('postPublish', (session: any) => {
+    try {
+      const streamPath = session.streamPath || '';
+      const streamKey = streamPath.split('/').pop();
+      log(`[RTMP] 🎥 Stream started: ${streamKey}`);
+
+      // Start FFmpeg transcoding manually
+      startFFmpegTranscoding(streamKey);
+    } catch (error: any) {
+      log(`[RTMP] ❌ Error in postPublish handler: ${error.message}`);
+    }
   });
 
   // Handle stream end
-  nms.on('donePublish', (id: string, streamPath: string, args: any) => {
-    const streamKey = streamPath.split('/').pop();
-    if (streamKey) {
-      activeStreams.delete(streamKey);
-      log(`[RTMP] ⏹️ Stream ended: ${streamKey}`);
+  nms.on('donePublish', (session: any) => {
+    try {
+      const streamPath = session.streamPath || '';
+      const streamKey = streamPath.split('/').pop();
+      if (streamKey) {
+        activeStreams.delete(streamKey);
+        stopFFmpegTranscoding(streamKey);
+        log(`[RTMP] ⏹️ Stream ended: ${streamKey}`);
+      }
+    } catch (error: any) {
+      log(`[RTMP] ❌ Error in donePublish handler: ${error.message}`);
     }
   });
 
   // Handle play events
-  nms.on('prePlay', (id: string, streamPath: string, args: any) => {
-    const streamKey = streamPath.split('/').pop();
-    log(`[RTMP] 👁️ Viewer connected: ${streamKey}`);
+  nms.on('prePlay', (session: any) => {
+    try {
+      const streamPath = session.streamPath || '';
+      const streamKey = streamPath.split('/').pop();
+      log(`[RTMP] 👁️ Viewer connected: ${streamKey}`);
+    } catch (error: any) {
+      log(`[RTMP] ❌ Error in prePlay handler: ${error.message}`);
+    }
   });
 
   return nms;
+}
+
+// Manual FFmpeg transcoding functions
+function startFFmpegTranscoding(streamKey: string) {
+  try {
+    const mediaRoot = path.resolve(process.cwd(), 'media');
+    const hlsPath = path.join(mediaRoot, 'live', streamKey);
+
+    // Create HLS directory
+    if (!fs.existsSync(hlsPath)) {
+      fs.mkdirSync(hlsPath, { recursive: true });
+    }
+
+    // FFmpeg command to transcode RTMP to HLS
+    const ffmpegArgs = [
+      '-i', `rtmp://127.0.0.1:1935/live/${streamKey}`,
+      '-c:v', 'copy',  // Copy video codec (no re-encoding)
+      '-c:a', 'aac',   // Transcode audio to AAC
+      '-f', 'hls',
+      '-hls_time', '2',
+      '-hls_list_size', '3',
+      '-hls_flags', 'delete_segments',
+      path.join(hlsPath, 'index.m3u8')
+    ];
+
+    log(`[FFmpeg] Starting transcoding for stream: ${streamKey}`);
+    log(`[FFmpeg] Output: ${hlsPath}/index.m3u8`);
+
+    const ffmpegProcess = spawn('/usr/bin/ffmpeg', ffmpegArgs);
+
+    ffmpegProcess.stdout?.on('data', (data) => {
+      log(`[FFmpeg] ${data.toString().trim()}`);
+    });
+
+    ffmpegProcess.stderr?.on('data', (data) => {
+      const message = data.toString().trim();
+      if (message.includes('frame=') || message.includes('time=')) {
+        // Skip verbose frame info
+        return;
+      }
+      log(`[FFmpeg] ${message}`);
+    });
+
+    ffmpegProcess.on('close', (code) => {
+      log(`[FFmpeg] Process exited with code ${code} for stream: ${streamKey}`);
+      ffmpegProcesses.delete(streamKey);
+    });
+
+    ffmpegProcess.on('error', (error) => {
+      log(`[FFmpeg] ❌ Error: ${error.message}`);
+    });
+
+    ffmpegProcesses.set(streamKey, ffmpegProcess);
+    log(`[FFmpeg] ✅ Transcoding started for stream: ${streamKey}`);
+  } catch (error: any) {
+    log(`[FFmpeg] ❌ Failed to start transcoding: ${error.message}`);
+  }
+}
+
+function stopFFmpegTranscoding(streamKey: string) {
+  const ffmpegProcess = ffmpegProcesses.get(streamKey);
+  if (ffmpegProcess) {
+    log(`[FFmpeg] Stopping transcoding for stream: ${streamKey}`);
+    ffmpegProcess.kill('SIGTERM');
+    ffmpegProcesses.delete(streamKey);
+  }
 }
 
 export function startMediaServer(): void {

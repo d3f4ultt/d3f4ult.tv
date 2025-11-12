@@ -52,9 +52,12 @@ export function StreamPlayer({
 
     playerRef.current = player;
 
-    // Construct HLS URL
-    const hlsUrl = `http://${window.location.hostname}:${hlsPort}/live/${streamKey}/index.m3u8`;
-    
+    // Construct HLS URL - use relative path since nginx serves /live/ directly
+    // This avoids mixed content issues (HTTPS page loading HTTP resources)
+    const hlsUrl = `/live/${streamKey}/index.m3u8`;
+
+    console.log('[StreamPlayer] Loading HLS stream from:', hlsUrl);
+
     // Set source
     player.src({
       src: hlsUrl,
