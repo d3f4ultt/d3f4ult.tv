@@ -7,8 +7,8 @@ interface Props {
 }
 
 export function WalletProvider({ children }: Props) {
-  // Use mainnet endpoint
-  const endpoint = useMemo(() => 'https://api.mainnet-beta.solana.com', []);
+  // Use Helius premium RPC with mainnet as backup
+  const endpoint = useMemo(() => 'https://mainnet.helius-rpc.com/?api-key=f4bb0177-d618-4782-bda9-fadf0f63df7f', []);
 
   // Initialize Phantom wallet adapter
   const wallets = useMemo(() => [new PhantomWalletAdapter()], []);

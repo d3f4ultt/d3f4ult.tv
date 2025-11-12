@@ -98,3 +98,50 @@ export const users = {
 
 export type User = z.infer<typeof users.id> & z.infer<typeof users.username> & z.infer<typeof users.password>;
 export type InsertUser = Omit<User, 'id'>;
+
+// Portfolio Tracking Types
+export type BlockchainType = "solana" | "bsc";
+
+export interface Wallet {
+  id: string;
+  address: string;
+  label: string;
+  blockchain: BlockchainType;
+  balance: number;
+  balanceUsd: number;
+  tokens: Token[];
+}
+
+export interface Token {
+  symbol: string;
+  name: string;
+  amount: number;
+  price: number;
+  value: number;
+  change24h: number;
+  logo?: string;
+}
+
+export interface PortfolioStats {
+  totalValue: number;
+  change24h: number;
+  change24hPercent: number;
+  walletsCount: number;
+  tokensCount: number;
+}
+
+// Portfolio API Validation Schemas
+export const addWalletSchema = z.object({
+  address: z.string().min(1, "Address is required").max(500),
+  label: z.string().max(100).optional(),
+  blockchain: z.enum(["solana", "bsc"], {
+    errorMap: () => ({ message: "Blockchain must be either 'solana' or 'bsc'" })
+  }),
+});
+
+export const updateWalletLabelSchema = z.object({
+  label: z.string().min(1, "Label cannot be empty").max(100),
+});
+
+export type AddWalletInput = z.infer<typeof addWalletSchema>;
+export type UpdateWalletLabelInput = z.infer<typeof updateWalletLabelSchema>;

@@ -2,6 +2,9 @@ import { LayoutGrid, MonitorPlay, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { LayoutMode } from "@shared/schema";
+import { LoginButton } from "@/components/auth/LoginButton";
+import { UserMenu } from "@/components/auth/UserMenu";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface LayoutSwitcherProps {
   currentLayout: LayoutMode;
@@ -11,21 +14,22 @@ interface LayoutSwitcherProps {
   nextSwitchIn?: number;
 }
 
-export function LayoutSwitcher({ 
-  currentLayout, 
-  onLayoutChange, 
-  autoSwitch, 
+export function LayoutSwitcher({
+  currentLayout,
+  onLayoutChange,
+  autoSwitch,
   onAutoSwitchToggle,
-  nextSwitchIn 
+  nextSwitchIn
 }: LayoutSwitcherProps) {
+  const { user, isLoading: authLoading } = useAuth();
+
   const layouts: { mode: LayoutMode; icon: any; label: string }[] = [
     { mode: 'full-dashboard', icon: LayoutGrid, label: 'Dashboard' },
     { mode: 'stream-sidebar', icon: MonitorPlay, label: 'Stream' },
-    { mode: 'video-overlay', icon: Video, label: 'Overlay' },
   ];
-  
+
   return (
-    <div 
+    <div
       className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-card/95 backdrop-blur-sm border border-card-border rounded-lg p-2 shadow-lg"
       data-testid="layout-switcher"
     >
@@ -44,26 +48,10 @@ export function LayoutSwitcher({
           </Button>
         ))}
       </div>
-      
+
       <div className="w-px h-6 bg-border" />
-      
-      <Button
-        size="sm"
-        variant={autoSwitch ? "default" : "outline"}
-        onClick={onAutoSwitchToggle}
-        className="gap-2"
-        data-testid="button-auto-switch"
-      >
-        <span className="hidden sm:inline">Auto</span>
-        {autoSwitch && nextSwitchIn !== undefined && (
-          <Badge 
-            variant="secondary" 
-            className="text-xs no-default-hover-elevate no-default-active-elevate"
-          >
-            {nextSwitchIn}s
-          </Badge>
-        )}
-      </Button>
+
+      {!authLoading && (user ? <UserMenu /> : <LoginButton />)}
     </div>
   );
 }

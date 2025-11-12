@@ -1,29 +1,34 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
+import { LayoutGrid, MonitorPlay } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { BookOpen } from "lucide-react";
 import { PriceTickerCard } from "@/components/PriceTickerCard";
 import { NewsCard } from "@/components/NewsCard";
 import { TweetCard } from "@/components/TweetCard";
 import { TickerBar } from "@/components/TickerBar";
-import { LayoutSwitcher } from "@/components/LayoutSwitcher";
 import { LiveIndicator } from "@/components/LiveIndicator";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { LoadingState, PriceCardSkeleton, NewsCardSkeleton, TweetCardSkeleton } from "@/components/LoadingState";
-import ChatEmbed from "@/components/ChatEmbed";
+import LiveChat from "@/components/LiveChat";
 import { PumpFunWidget } from "@/components/PumpFunWidget";
-import { WalletButton } from "@/components/WalletButton";
 import { JupiterSwap } from "@/components/JupiterSwap";
 import { StreamPlayer } from "@/components/StreamPlayer";
 import { StreamControls } from "@/components/StreamControls";
+import { PortfolioWidget } from "@/components/portfolio/PortfolioWidget";
+import { PortfolioDialog } from "@/components/portfolio/PortfolioDialog";
+import { LoginButton } from "@/components/auth/LoginButton";
+import { UserMenu } from "@/components/auth/UserMenu";
+import { useAuth } from "@/contexts/AuthContext";
 import type { CryptoPrice, NewsArticle, Tweet, LayoutMode, WSMessage } from "@shared/schema";
 
 export default function Dashboard() {
+  const { user, isLoading: authLoading } = useAuth();
+
   // Check URL parameters for initial layout
   const urlParams = new URLSearchParams(window.location.search);
   const urlLayout = urlParams.get('layout') as LayoutMode | null;
-  const validLayouts: LayoutMode[] = ['full-dashboard', 'stream-sidebar', 'video-overlay', 'ticker-only'];
+  const validLayouts: LayoutMode[] = ['full-dashboard', 'stream-sidebar', 'ticker-only'];
   const isValidLayout = urlLayout && validLayouts.includes(urlLayout);
   const initialLayout: LayoutMode = isValidLayout ? urlLayout : 'full-dashboard';
 
@@ -151,8 +156,8 @@ export default function Dashboard() {
   // Auto layout switching with configurable interval
   useEffect(() => {
     if (!autoSwitch) return;
-    
-    const layouts: LayoutMode[] = ['full-dashboard', 'stream-sidebar', 'video-overlay'];
+
+    const layouts: LayoutMode[] = ['full-dashboard', 'stream-sidebar'];
     let currentIndex = layouts.indexOf(currentLayout);
     let countdown = autoSwitchInterval;
     
@@ -210,8 +215,8 @@ export default function Dashboard() {
         return;
       }
 
-      const layouts: LayoutMode[] = ['full-dashboard', 'stream-sidebar', 'video-overlay'];
-      
+      const layouts: LayoutMode[] = ['full-dashboard', 'stream-sidebar'];
+
       switch (e.key) {
         case '1':
           setCurrentLayout('full-dashboard');
@@ -229,20 +234,6 @@ export default function Dashboard() {
           break;
         case '2':
           setCurrentLayout('stream-sidebar');
-          // Clear any pending auto-resume timeout
-          if (autoResumeTimeoutRef.current) {
-            clearTimeout(autoResumeTimeoutRef.current);
-          }
-          // Pause auto-switch temporarily
-          setAutoSwitch(false);
-          // Auto-resume after 3 seconds
-          autoResumeTimeoutRef.current = setTimeout(() => {
-            setAutoSwitch(true);
-            autoResumeTimeoutRef.current = null;
-          }, 3000);
-          break;
-        case '3':
-          setCurrentLayout('video-overlay');
           // Clear any pending auto-resume timeout
           if (autoResumeTimeoutRef.current) {
             clearTimeout(autoResumeTimeoutRef.current);
@@ -311,17 +302,56 @@ export default function Dashboard() {
   // Full Dashboard Layout
   if (currentLayout === 'full-dashboard') {
     return (
-      <div className="min-h-screen bg-background" data-testid="layout-full-dashboard">
-        <LayoutSwitcher
-          currentLayout={currentLayout}
-          onLayoutChange={setCurrentLayout}
-          autoSwitch={autoSwitch}
-          onAutoSwitchToggle={() => setAutoSwitch(!autoSwitch)}
-          nextSwitchIn={nextSwitchIn}
-        />
-        
+      <div className="min-h-screen bg-background relative" data-testid="layout-full-dashboard">
         <TickerBar prices={prices} />
-        
+
+        {/* Top-right Controls */}
+        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-card/95 backdrop-blur-sm border border-card-border rounded-lg p-2 shadow-lg">
+          <Button
+            size="sm"
+            variant={currentLayout === 'full-dashboard' ? "default" : "ghost"}
+            onClick={() => setCurrentLayout('full-dashboard')}
+            className="gap-2"
+            data-testid="button-layout-dashboard"
+          >
+            <LayoutGrid className="w-4 h-4" />
+            <span className="hidden sm:inline">Dashboard</span>
+          </Button>
+          <Button
+            size="sm"
+            variant={currentLayout === 'stream-sidebar' ? "default" : "ghost"}
+            onClick={() => setCurrentLayout('stream-sidebar')}
+            className="gap-2"
+            data-testid="button-layout-stream"
+          >
+            <MonitorPlay className="w-4 h-4" />
+            <span className="hidden sm:inline">Stream</span>
+          </Button>
+          <div className="w-px h-6 bg-border" />
+          {!authLoading && (user ? <UserMenu /> : <LoginButton />)}
+        </div>
+
+        {/* Floating Chat Overlay */}
+        <div
+          className={`fixed z-40 ${
+            chatPosition === 'bottom-right' ? 'bottom-6 right-6' :
+            chatPosition === 'bottom-left' ? 'bottom-6 left-6' :
+            chatPosition === 'top-right' ? 'top-20 right-6' :
+            'top-20 left-6'
+          } ${chatMinimized ? 'w-auto h-auto' : 'w-80 h-96'}`}
+          data-testid="chat-overlay-container"
+          style={{ pointerEvents: 'auto' }}
+        >
+          <LiveChat
+            overlay={true}
+            minimized={chatMinimized}
+            position={chatPosition}
+            unreadCount={chatUnreadCount}
+            onToggle={handleChatToggle}
+            onPositionChange={handleChatPositionChange}
+          />
+        </div>
+
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
             <div>
@@ -329,24 +359,26 @@ export default function Dashboard() {
               <p className="text-muted-foreground">Real-time market dashboard</p>
             </div>
             <div className="flex items-center gap-3">
-              <WalletButton />
+              <PortfolioDialog />
               <JupiterSwap />
-              <Link href="/obs-guide">
-                <Button variant="outline" size="sm" data-testid="button-obs-guide">
-                  <BookOpen className="w-4 h-4 mr-2" />
-                  OBS Setup Guide
-                </Button>
-              </Link>
-              <SettingsPanel 
+              <SettingsPanel
                 autoSwitchInterval={autoSwitchInterval}
                 onIntervalChange={setAutoSwitchInterval}
+                autoSwitch={autoSwitch}
+                onAutoSwitchToggle={() => setAutoSwitch(!autoSwitch)}
+                nextSwitchIn={nextSwitchIn}
                 open={settingsOpen}
                 onOpenChange={setSettingsOpen}
               />
               <LiveIndicator connected={wsConnected} />
             </div>
           </div>
-          
+
+          {/* Portfolio Widget */}
+          <div className="mb-6">
+            <PortfolioWidget />
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Left: Crypto Prices */}
             <div className="lg:col-span-4 space-y-4">
@@ -413,16 +445,34 @@ export default function Dashboard() {
   if (currentLayout === 'stream-sidebar') {
     return (
       <div className="h-screen bg-background flex flex-col overflow-hidden" data-testid="layout-stream-sidebar">
-        <LayoutSwitcher
-          currentLayout={currentLayout}
-          onLayoutChange={setCurrentLayout}
-          autoSwitch={autoSwitch}
-          onAutoSwitchToggle={() => setAutoSwitch(!autoSwitch)}
-          nextSwitchIn={nextSwitchIn}
-        />
-        
         <TickerBar prices={prices} />
-        
+
+        {/* Top-right Controls */}
+        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-card/95 backdrop-blur-sm border border-card-border rounded-lg p-2 shadow-lg">
+          <Button
+            size="sm"
+            variant={currentLayout === 'full-dashboard' ? "default" : "ghost"}
+            onClick={() => setCurrentLayout('full-dashboard')}
+            className="gap-2"
+            data-testid="button-layout-dashboard"
+          >
+            <LayoutGrid className="w-4 h-4" />
+            <span className="hidden sm:inline">Dashboard</span>
+          </Button>
+          <Button
+            size="sm"
+            variant={currentLayout === 'stream-sidebar' ? "default" : "ghost"}
+            onClick={() => setCurrentLayout('stream-sidebar')}
+            className="gap-2"
+            data-testid="button-layout-stream"
+          >
+            <MonitorPlay className="w-4 h-4" />
+            <span className="hidden sm:inline">Stream</span>
+          </Button>
+          <div className="w-px h-6 bg-border" />
+          {!authLoading && (user ? <UserMenu /> : <LoginButton />)}
+        </div>
+
         <div className="flex-1 flex overflow-hidden">
           {/* Main Stream Area - Custom RTMP Stream */}
           <div className="flex-1 bg-black border-r border-border relative">
@@ -433,16 +483,17 @@ export default function Dashboard() {
             />
 
             {/* Floating Chat Overlay */}
-            <div 
-              className={`absolute pointer-events-auto ${
+            <div
+              className={`absolute ${
                 chatPosition === 'bottom-right' ? 'bottom-6 right-6' :
                 chatPosition === 'bottom-left' ? 'bottom-6 left-6' :
                 chatPosition === 'top-right' ? 'top-6 right-6' :
                 'top-6 left-6'
               } ${chatMinimized ? 'w-auto h-auto' : 'w-80 h-96'}`}
               data-testid="chat-overlay-container"
+              style={{ pointerEvents: 'auto' }}
             >
-              <ChatEmbed 
+              <LiveChat
                 overlay={true}
                 minimized={chatMinimized}
                 position={chatPosition}
@@ -458,15 +509,18 @@ export default function Dashboard() {
             <div className="p-4 border-b border-border flex flex-col gap-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold">Live Stream</h2>
-                <SettingsPanel 
+                <SettingsPanel
                   autoSwitchInterval={autoSwitchInterval}
                   onIntervalChange={setAutoSwitchInterval}
+                  autoSwitch={autoSwitch}
+                  onAutoSwitchToggle={() => setAutoSwitch(!autoSwitch)}
+                  nextSwitchIn={nextSwitchIn}
                   open={settingsOpen}
                   onOpenChange={setSettingsOpen}
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <WalletButton />
+                <PortfolioDialog fullWidth />
                 <JupiterSwap />
               </div>
             </div>
@@ -492,36 +546,6 @@ export default function Dashboard() {
     );
   }
 
-  // Video Overlay Layout (minimal, for OBS)
-  return (
-    <div className="h-screen relative bg-transparent" data-testid="layout-video-overlay">
-      <LayoutSwitcher
-        currentLayout={currentLayout}
-        onLayoutChange={setCurrentLayout}
-        autoSwitch={autoSwitch}
-        onAutoSwitchToggle={() => setAutoSwitch(!autoSwitch)}
-        nextSwitchIn={nextSwitchIn}
-      />
-      
-      {/* Bottom Ticker */}
-      <div className="absolute bottom-0 left-0 right-0">
-        <TickerBar prices={prices} />
-      </div>
-      
-      {/* Logo Watermark */}
-      <div className="absolute top-6 left-6 bg-card/80 backdrop-blur-md border border-card-border rounded-lg p-4 shadow-xl">
-        <h1 className="text-2xl font-bold">Crypto Live</h1>
-        <LiveIndicator connected={wsConnected} />
-      </div>
-      
-      {/* Breaking News Banner (if available) */}
-      {news.length > 0 && (
-        <div className="absolute top-6 right-6 max-w-md">
-          <div className="bg-card/90 backdrop-blur-md border border-card-border rounded-lg p-4 shadow-xl">
-            <NewsCard article={news[currentNewsIndex]} isBreaking />
-          </div>
-        </div>
-      )}
-    </div>
-  );
+  // Default to full-dashboard if no layout matches
+  return null;
 }

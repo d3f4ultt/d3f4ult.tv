@@ -55,10 +55,10 @@ export function JupiterSwap() {
     }
 
     try {
-      // Initialize Jupiter with wallet passthrough
+      // Initialize Jupiter with wallet passthrough using Helius premium RPC
       await window.Jupiter.init({
         displayMode: 'modal',
-        endpoint: 'https://api.mainnet-beta.solana.com',
+        endpoint: 'https://mainnet.helius-rpc.com/?api-key=f4bb0177-d618-4782-bda9-fadf0f63df7f',
         enableWalletPassthrough: true,
         passthroughWalletContextState: walletContext,
         containerClassName: 'max-h-[90vh] w-full',
