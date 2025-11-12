@@ -136,28 +136,41 @@ echo "======================================"
 echo "Step 4: Creating Environment Configuration"
 echo "======================================"
 
-# Create .env file if it doesn't exist
+# Create .env file from template
 if [ ! -f ".env" ]; then
-    cat > .env << EOF
-# Server Configuration
-NODE_ENV=production
-PORT=5000
-HOST=0.0.0.0
+    if [ -f ".env.example" ]; then
+        cp .env.example .env
+        # Generate random session secret
+        SESSION_SECRET=$(openssl rand -base64 32)
+        sed -i "s/change_this_to_a_random_secure_string/$SESSION_SECRET/g" .env
+        echo -e "${GREEN}.env file created from template${NC}"
+    else
+        # Fallback if .env.example doesn't exist
+        cat > .env << EOF
+# Database
+DATABASE_URL=postgresql://user:password@host:port/dbname
 
-# Session Secret (generate a random one)
-SESSION_SECRET=$(openssl rand -base64 32)
-
-# Twitter API Configuration
+# Twitter API
 TWITTER_API_KEY=your_twitter_api_key
 TWITTER_API_SECRET=your_twitter_api_secret
 TWITTER_BEARER_TOKEN=your_twitter_bearer_token
 
-# RTMP Configuration (automatically enabled on VPS)
-# DISABLE_RTMP=false  # Leave commented to enable RTMP
+# Session
+SESSION_SECRET=$(openssl rand -base64 32)
+
+# Server
+NODE_ENV=production
+PORT=5000
+HOST=0.0.0.0
+
+# Streaming
+RTMP_PORT=1935
+HLS_PORT=8888
 EOF
-    
-    echo -e "${GREEN}.env file created${NC}"
-    echo -e "${YELLOW}Please edit $APP_DIR/.env and add your API keys${NC}"
+        echo -e "${GREEN}.env file created${NC}"
+    fi
+
+    echo -e "${YELLOW}⚠️  IMPORTANT: Edit $APP_DIR/.env and add your API keys${NC}"
     chown $SUDO_USER:$SUDO_USER .env
     chmod 600 .env
 else
@@ -294,27 +307,32 @@ module.exports = {
   apps: [{
     name: 'crypto-live',
     script: 'npm',
-    args: 'run dev',
+    args: 'start',
     cwd: '$APP_DIR',
     instances: 1,
     autorestart: true,
     watch: false,
-    max_memory_restart: '500M',
+    max_memory_restart: '1G',
     env: {
       NODE_ENV: 'production',
       PORT: 5000,
-      HOST: '0.0.0.0'
+      HOST: '0.0.0.0',
+      RTMP_PORT: 1935,
+      HLS_PORT: 8888
     },
-    error_file: '$APP_DIR/logs/error.log',
-    out_file: '$APP_DIR/logs/output.log',
-    log_file: '$APP_DIR/logs/combined.log',
+    error_file: '/var/log/pm2/crypto-live-error.log',
+    out_file: '/var/log/pm2/crypto-live-out.log',
     time: true
   }]
 };
 EOF
 
-# Create logs directory
-mkdir -p logs
+# Create PM2 log directory
+mkdir -p /var/log/pm2
+
+# Build the application
+echo "Building application for production..."
+npm run build
 
 # Stop any existing instance
 pm2 delete crypto-live 2>/dev/null || true
