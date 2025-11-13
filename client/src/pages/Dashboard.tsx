@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { LayoutGrid, MonitorPlay } from "lucide-react";
+import { LayoutGrid, MonitorPlay, Copy, TrendingUp, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PriceTickerCard } from "@/components/PriceTickerCard";
 import { NewsCard } from "@/components/NewsCard";
 import { TweetCard } from "@/components/TweetCard";
@@ -14,9 +15,9 @@ import LiveChat from "@/components/LiveChat";
 import { PumpFunWidget } from "@/components/PumpFunWidget";
 import { JupiterSwap } from "@/components/JupiterSwap";
 import { StreamPlayer } from "@/components/StreamPlayer";
-import { StreamControls } from "@/components/StreamControls";
 import { PortfolioWidget } from "@/components/portfolio/PortfolioWidget";
 import { PortfolioDialog } from "@/components/portfolio/PortfolioDialog";
+import { SwapWidget } from "@/components/SwapWidget";
 import { LoginButton } from "@/components/auth/LoginButton";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,7 +29,7 @@ export default function Dashboard() {
   // Check URL parameters for initial layout
   const urlParams = new URLSearchParams(window.location.search);
   const urlLayout = urlParams.get('layout') as LayoutMode | null;
-  const validLayouts: LayoutMode[] = ['full-dashboard', 'stream-sidebar', 'ticker-only'];
+  const validLayouts: LayoutMode[] = ['full-dashboard', 'ticker-only'];
   const isValidLayout = urlLayout && validLayouts.includes(urlLayout);
   const initialLayout: LayoutMode = isValidLayout ? urlLayout : 'full-dashboard';
 
@@ -36,9 +37,7 @@ export default function Dashboard() {
   const [news, setNews] = useState<NewsArticle[]>([]);
   const [tweets, setTweets] = useState<Tweet[]>([]);
   const [currentLayout, setCurrentLayout] = useState<LayoutMode>(initialLayout);
-  const [autoSwitch, setAutoSwitch] = useState(!isValidLayout); // Only disable auto-switch if layout parameter is valid
-  const [autoSwitchInterval, setAutoSwitchInterval] = useState(45); // Configurable interval in seconds
-  const [nextSwitchIn, setNextSwitchIn] = useState(45);
+  const [streamExpanded, setStreamExpanded] = useState(false); // Toggle between large/small stream
   const [wsConnected, setWsConnected] = useState(false);
   const [currentNewsIndex, setCurrentNewsIndex] = useState(0);
   const [currentTweetIndex, setCurrentTweetIndex] = useState(0);
@@ -153,32 +152,6 @@ export default function Dashboard() {
     };
   }, []);
 
-  // Auto layout switching with configurable interval
-  useEffect(() => {
-    if (!autoSwitch) return;
-
-    const layouts: LayoutMode[] = ['full-dashboard', 'stream-sidebar'];
-    let currentIndex = layouts.indexOf(currentLayout);
-    let countdown = autoSwitchInterval;
-    
-    const countdownInterval = setInterval(() => {
-      countdown--;
-      setNextSwitchIn(countdown);
-      
-      if (countdown === 0) {
-        currentIndex = (currentIndex + 1) % layouts.length;
-        setCurrentLayout(layouts[currentIndex]);
-        countdown = autoSwitchInterval;
-      }
-    }, 1000);
-    
-    return () => clearInterval(countdownInterval);
-  }, [autoSwitch, currentLayout, autoSwitchInterval]);
-
-  // Reset countdown when interval changes
-  useEffect(() => {
-    setNextSwitchIn(autoSwitchInterval);
-  }, [autoSwitchInterval]);
 
   // News rotation
   useEffect(() => {
@@ -215,56 +188,17 @@ export default function Dashboard() {
         return;
       }
 
-      const layouts: LayoutMode[] = ['full-dashboard', 'stream-sidebar'];
-
       switch (e.key) {
-        case '1':
-          setCurrentLayout('full-dashboard');
-          // Clear any pending auto-resume timeout
-          if (autoResumeTimeoutRef.current) {
-            clearTimeout(autoResumeTimeoutRef.current);
-          }
-          // Pause auto-switch temporarily
-          setAutoSwitch(false);
-          // Auto-resume after 3 seconds
-          autoResumeTimeoutRef.current = setTimeout(() => {
-            setAutoSwitch(true);
-            autoResumeTimeoutRef.current = null;
-          }, 3000);
-          break;
-        case '2':
-          setCurrentLayout('stream-sidebar');
-          // Clear any pending auto-resume timeout
-          if (autoResumeTimeoutRef.current) {
-            clearTimeout(autoResumeTimeoutRef.current);
-          }
-          // Pause auto-switch temporarily
-          setAutoSwitch(false);
-          // Auto-resume after 3 seconds
-          autoResumeTimeoutRef.current = setTimeout(() => {
-            setAutoSwitch(true);
-            autoResumeTimeoutRef.current = null;
-          }, 3000);
-          break;
-        case ' ':
-          e.preventDefault(); // Prevent page scroll
-          // Clear any pending auto-resume timeout (manual override)
-          if (autoResumeTimeoutRef.current) {
-            clearTimeout(autoResumeTimeoutRef.current);
-            autoResumeTimeoutRef.current = null;
-            // If there was a pending resume, keep auto-switch off (user wants manual control)
-            setAutoSwitch(false);
-          } else {
-            // No pending resume, toggle normally
-            setAutoSwitch(!autoSwitch);
-          }
+        case 's':
+          // Toggle settings
+          setSettingsOpen(!settingsOpen);
           break;
       }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [autoSwitch, settingsOpen]);
+  }, [settingsOpen]);
 
   // Simulate notifications when chat is minimized
   useEffect(() => {
@@ -299,37 +233,81 @@ export default function Dashboard() {
     setChatPosition(position);
   };
 
-  // Full Dashboard Layout
+  // Combined Dashboard + Stream Layout
   if (currentLayout === 'full-dashboard') {
+    // Large Stream View (Full Screen Mode)
+    if (streamExpanded) {
+      return (
+        <div className="h-screen bg-background flex flex-col overflow-hidden" data-testid="layout-stream-expanded">
+          <TickerBar
+            prices={prices}
+            settingsOpen={settingsOpen}
+            onSettingsOpenChange={setSettingsOpen}
+            wsConnected={wsConnected}
+          />
+
+          {/* Dashboard Toggle Button */}
+          <div className="fixed top-4 right-4 z-50 bg-card/95 backdrop-blur-sm border border-card-border rounded-lg p-2 shadow-lg">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setStreamExpanded(false)}
+              className="gap-2"
+              data-testid="button-collapse-stream"
+            >
+              <LayoutGrid className="w-4 h-4" />
+              <span className="hidden sm:inline">Dashboard</span>
+            </Button>
+          </div>
+
+          <div className="flex-1 flex overflow-hidden">
+            {/* Main Stream Area */}
+            <div className="flex-1 bg-black border-r border-border relative">
+              <StreamPlayer
+                streamKey={streamKey}
+                hlsPort={streamConfig?.hlsPort || 8888}
+                className="absolute inset-0"
+              />
+            </div>
+
+            {/* Sidebar */}
+            <div className="w-96 bg-background border-l border-border overflow-y-auto">
+              <div className="p-4 space-y-4">
+                <div>
+                  <h3 className="text-sm font-medium mb-3">Pump.fun Market</h3>
+                  <PumpFunWidget />
+                </div>
+
+                {/* Live Chat Section */}
+                <div>
+                  <h3 className="text-sm font-medium mb-3">Live Chat</h3>
+                  <div className="h-96">
+                    <LiveChat
+                      overlay={false}
+                      minimized={false}
+                      position="bottom-right"
+                      unreadCount={0}
+                      onToggle={() => {}}
+                      onPositionChange={() => {}}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Small Stream Widget View (Dashboard Mode)
     return (
       <div className="min-h-screen bg-background relative" data-testid="layout-full-dashboard">
-        <TickerBar prices={prices} />
-
-        {/* Top-right Controls */}
-        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-card/95 backdrop-blur-sm border border-card-border rounded-lg p-2 shadow-lg">
-          <Button
-            size="sm"
-            variant={currentLayout === 'full-dashboard' ? "default" : "ghost"}
-            onClick={() => setCurrentLayout('full-dashboard')}
-            className="gap-2"
-            data-testid="button-layout-dashboard"
-          >
-            <LayoutGrid className="w-4 h-4" />
-            <span className="hidden sm:inline">Dashboard</span>
-          </Button>
-          <Button
-            size="sm"
-            variant={currentLayout === 'stream-sidebar' ? "default" : "ghost"}
-            onClick={() => setCurrentLayout('stream-sidebar')}
-            className="gap-2"
-            data-testid="button-layout-stream"
-          >
-            <MonitorPlay className="w-4 h-4" />
-            <span className="hidden sm:inline">Stream</span>
-          </Button>
-          <div className="w-px h-6 bg-border" />
-          {!authLoading && (user ? <UserMenu /> : <LoginButton />)}
-        </div>
+        <TickerBar
+          prices={prices}
+          settingsOpen={settingsOpen}
+          onSettingsOpenChange={setSettingsOpen}
+          wsConnected={wsConnected}
+        />
 
         {/* Floating Chat Overlay */}
         <div
@@ -353,35 +331,85 @@ export default function Dashboard() {
         </div>
 
         <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
-            <div>
-              <h1 className="text-3xl font-bold mb-1">Crypto Live</h1>
-              <p className="text-muted-foreground">Real-time market dashboard</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <PortfolioDialog />
-              <JupiterSwap />
-              <SettingsPanel
-                autoSwitchInterval={autoSwitchInterval}
-                onIntervalChange={setAutoSwitchInterval}
-                autoSwitch={autoSwitch}
-                onAutoSwitchToggle={() => setAutoSwitch(!autoSwitch)}
-                nextSwitchIn={nextSwitchIn}
-                open={settingsOpen}
-                onOpenChange={setSettingsOpen}
-              />
-              <LiveIndicator connected={wsConnected} />
-            </div>
-          </div>
-
           {/* Portfolio Widget */}
           <div className="mb-6">
             <PortfolioWidget />
           </div>
 
+          {/* Copy Trading Banner */}
+          <div className="mb-6">
+            <Card className="border-2 border-primary/20 bg-gradient-to-r from-primary/10 to-background">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-primary/20 rounded-lg">
+                      <Copy className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl">Copy Trading</CardTitle>
+                      <CardDescription>
+                        Automatically mirror top traders' strategies
+                      </CardDescription>
+                    </div>
+                  </div>
+                  <Link href="/copy-trading">
+                    <Button size="lg" className="gap-2">
+                      <TrendingUp className="h-5 w-5" />
+                      Start Copy Trading
+                    </Button>
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="flex flex-col">
+                    <span className="text-2xl font-bold text-primary">5</span>
+                    <span className="text-sm text-muted-foreground">Top Traders</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-2xl font-bold text-green-500">+45.8%</span>
+                    <span className="text-sm text-muted-foreground">Best ROI</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-2xl font-bold text-blue-500">1,234</span>
+                    <span className="text-sm text-muted-foreground">Active Copiers</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Dashboard Content */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Left: Crypto Prices */}
-            <div className="lg:col-span-4 space-y-4">
+            {/* Left: Live Stream (Small Widget) */}
+            <div className="lg:col-span-8 space-y-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold">Live Stream</h2>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setStreamExpanded(true)}
+                  data-testid="button-expand-stream"
+                >
+                  <MonitorPlay className="w-4 h-4 mr-2" />
+                  Expand
+                </Button>
+              </div>
+              <div className="relative bg-black rounded-lg overflow-hidden border border-border" style={{ aspectRatio: '16/9' }}>
+                <StreamPlayer
+                  streamKey={streamKey}
+                  hlsPort={streamConfig?.hlsPort || 8888}
+                  className="absolute inset-0"
+                />
+              </div>
+              <div className="pt-4">
+                <h3 className="text-sm font-medium mb-3">Pump.fun Market</h3>
+                <PumpFunWidget />
+              </div>
+            </div>
+
+            {/* Center: Crypto Prices */}
+            <div className="lg:col-span-2 space-y-4">
               <h2 className="text-xl font-bold mb-4">Live Prices</h2>
               {pricesLoading ? (
                 <><PriceCardSkeleton /><PriceCardSkeleton /></>
@@ -395,140 +423,50 @@ export default function Dashboard() {
                 <div className="text-muted-foreground">No price data available.</div>
               )}
             </div>
-            
-            {/* Center: Breaking News */}
-            <div className="lg:col-span-4 space-y-4">
-              <h2 className="text-xl font-bold mb-4">Breaking News</h2>
-              {newsLoading ? (
-                <><NewsCardSkeleton /><NewsCardSkeleton /></>
-              ) : newsError ? (
-                <div className="text-red-500">Error loading news.</div>
-              ) : news.length > 0 ? (
-                <div className="space-y-4">
-                  {news.slice(currentNewsIndex, currentNewsIndex + 3).map((article, index) => (
-                    <NewsCard 
-                      key={article.id} 
-                      article={article} 
-                      isBreaking={index === 0}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-muted-foreground">No news available.</div>
-              )}
-            </div>
-            
-            {/* Right: Twitter Feed */}
-            <div className="lg:col-span-4 space-y-4">
-              <h2 className="text-xl font-bold mb-4">Notable Voices</h2>
-              {tweetsLoading ? (
-                <><TweetCardSkeleton /><TweetCardSkeleton /></>
-              ) : tweetsError ? (
-                <div className="text-red-500">Error loading tweets.</div>
-              ) : tweets.length > 0 ? (
-                <div className="space-y-3">
-                  {tweets.slice(currentTweetIndex, currentTweetIndex + 4).map((tweet) => (
-                    <TweetCard key={tweet.id} tweet={tweet} />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-muted-foreground">No tweets available.</div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
-  // Stream + Sidebar Layout
-  if (currentLayout === 'stream-sidebar') {
-    return (
-      <div className="h-screen bg-background flex flex-col overflow-hidden" data-testid="layout-stream-sidebar">
-        <TickerBar prices={prices} />
-
-        {/* Top-right Controls */}
-        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-card/95 backdrop-blur-sm border border-card-border rounded-lg p-2 shadow-lg">
-          <Button
-            size="sm"
-            variant={currentLayout === 'full-dashboard' ? "default" : "ghost"}
-            onClick={() => setCurrentLayout('full-dashboard')}
-            className="gap-2"
-            data-testid="button-layout-dashboard"
-          >
-            <LayoutGrid className="w-4 h-4" />
-            <span className="hidden sm:inline">Dashboard</span>
-          </Button>
-          <Button
-            size="sm"
-            variant={currentLayout === 'stream-sidebar' ? "default" : "ghost"}
-            onClick={() => setCurrentLayout('stream-sidebar')}
-            className="gap-2"
-            data-testid="button-layout-stream"
-          >
-            <MonitorPlay className="w-4 h-4" />
-            <span className="hidden sm:inline">Stream</span>
-          </Button>
-          <div className="w-px h-6 bg-border" />
-          {!authLoading && (user ? <UserMenu /> : <LoginButton />)}
-        </div>
-
-        <div className="flex-1 flex overflow-hidden">
-          {/* Main Stream Area - Custom RTMP Stream */}
-          <div className="flex-1 bg-black border-r border-border relative">
-            <StreamPlayer 
-              streamKey={streamKey}
-              hlsPort={streamConfig?.hlsPort || 8888}
-              className="absolute inset-0"
-            />
-
-            {/* Floating Chat Overlay */}
-            <div
-              className={`absolute ${
-                chatPosition === 'bottom-right' ? 'bottom-6 right-6' :
-                chatPosition === 'bottom-left' ? 'bottom-6 left-6' :
-                chatPosition === 'top-right' ? 'top-6 right-6' :
-                'top-6 left-6'
-              } ${chatMinimized ? 'w-auto h-auto' : 'w-80 h-96'}`}
-              data-testid="chat-overlay-container"
-              style={{ pointerEvents: 'auto' }}
-            >
-              <LiveChat
-                overlay={true}
-                minimized={chatMinimized}
-                position={chatPosition}
-                unreadCount={chatUnreadCount}
-                onToggle={handleChatToggle}
-                onPositionChange={handleChatPositionChange}
-              />
-            </div>
-          </div>
-          
-          {/* Sidebar with Stream Controls */}
-          <div className="w-96 bg-background border-l border-border overflow-y-auto">
-            <div className="p-4 border-b border-border flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold">Live Stream</h2>
-                <SettingsPanel
-                  autoSwitchInterval={autoSwitchInterval}
-                  onIntervalChange={setAutoSwitchInterval}
-                  autoSwitch={autoSwitch}
-                  onAutoSwitchToggle={() => setAutoSwitch(!autoSwitch)}
-                  nextSwitchIn={nextSwitchIn}
-                  open={settingsOpen}
-                  onOpenChange={setSettingsOpen}
-                />
+            {/* Right: Breaking News & Tweets */}
+            <div className="lg:col-span-2 space-y-6">
+              <div>
+                <h2 className="text-xl font-bold mb-4">Breaking News</h2>
+                {newsLoading ? (
+                  <><NewsCardSkeleton /><NewsCardSkeleton /></>
+                ) : newsError ? (
+                  <div className="text-red-500">Error loading news.</div>
+                ) : news.length > 0 ? (
+                  <div className="space-y-4">
+                    {news.slice(currentNewsIndex, currentNewsIndex + 2).map((article, index) => (
+                      <NewsCard
+                        key={article.id}
+                        article={article}
+                        isBreaking={index === 0}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-muted-foreground">No news available.</div>
+                )}
               </div>
-              <div className="flex flex-col gap-2">
-                <PortfolioDialog fullWidth />
-                <JupiterSwap />
+
+              <div>
+                <h2 className="text-xl font-bold mb-4">Notable Voices</h2>
+                {tweetsLoading ? (
+                  <><TweetCardSkeleton /><TweetCardSkeleton /></>
+                ) : tweetsError ? (
+                  <div className="text-red-500">Error loading tweets.</div>
+                ) : tweets.length > 0 ? (
+                  <div className="space-y-3">
+                    {tweets.slice(currentTweetIndex, currentTweetIndex + 3).map((tweet) => (
+                      <TweetCard key={tweet.id} tweet={tweet} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-muted-foreground">No tweets available.</div>
+                )}
               </div>
-            </div>
-            <div className="p-4 space-y-4">
-              <StreamControls />
-              <div className="pt-4 border-t border-border">
-                <h3 className="text-sm font-medium mb-3">Pump.fun Market</h3>
-                <PumpFunWidget />
+
+              {/* Swap Widget */}
+              <div>
+                <SwapWidget />
               </div>
             </div>
           </div>
@@ -536,12 +474,18 @@ export default function Dashboard() {
       </div>
     );
   }
+
 
   // Ticker Only Layout (just the ticker bar for lower-third overlays)
   if (currentLayout === 'ticker-only') {
     return (
       <div className="h-full bg-transparent" data-testid="layout-ticker-only">
-        <TickerBar prices={prices} />
+        <TickerBar
+          prices={prices}
+          settingsOpen={settingsOpen}
+          onSettingsOpenChange={setSettingsOpen}
+          wsConnected={wsConnected}
+        />
       </div>
     );
   }

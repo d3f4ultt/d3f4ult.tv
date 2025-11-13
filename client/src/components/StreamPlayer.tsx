@@ -1,7 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import videojs from 'video.js';
-import 'video.js/dist/video-js.css';
-import type Player from 'video.js/dist/types/player';
 
 interface StreamPlayerProps {
   streamKey: string;
@@ -12,8 +9,13 @@ interface StreamPlayerProps {
   className?: string;
 }
 
-export function StreamPlayer({ 
-  streamKey, 
+interface PlaylistVideo {
+  name: string;
+  url: string;
+}
+
+export function StreamPlayer({
+  streamKey,
   hlsPort = 8888,
   autoplay = true,
   muted = true,
@@ -21,106 +23,107 @@ export function StreamPlayer({
   className = ''
 }: StreamPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const playerRef = useRef<Player | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [playlistVideos, setPlaylistVideos] = useState<PlaylistVideo[]>([]);
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+  const [isPlayingPlaylist, setIsPlayingPlaylist] = useState(false);
 
+  // Fetch playlist videos on mount
   useEffect(() => {
-    if (!videoRef.current) return;
+    console.log('[StreamPlayer] Fetching playlist...');
+    fetch('/api/playlist/videos')
+      .then(res => res.json())
+      .then(videos => {
+        console.log('[StreamPlayer] Loaded playlist videos:', videos);
+        setPlaylistVideos(videos);
+        if (videos.length > 0) {
+          setIsPlayingPlaylist(true);
+        }
+      })
+      .catch(err => {
+        console.error('[StreamPlayer] Failed to load playlist:', err);
+        setHasError(true);
+      });
+  }, []);
 
-    // Initialize Video.js player
-    const player = videojs(videoRef.current, {
-      autoplay,
-      controls,
-      muted,
-      fluid: true,  // Responsive sizing
-      responsive: true,
-      liveui: true,  // Enable live UI
-      liveTracker: {
-        trackingThreshold: 0,
-      },
-      html5: {
-        vhs: {
-          enableLowInitialPlaylist: true,
-          smoothQualityChange: true,
-          overrideNative: true,
-        },
-        nativeAudioTracks: false,
-        nativeVideoTracks: false,
-      },
-    });
+  // Play next video in playlist
+  const playNextVideo = () => {
+    if (playlistVideos.length === 0) return;
+    setCurrentVideoIndex((prev) => (prev + 1) % playlistVideos.length);
+  };
 
-    playerRef.current = player;
+  // Update video source when playlist or index changes
+  useEffect(() => {
+    if (!videoRef.current || playlistVideos.length === 0) return;
 
-    // Construct HLS URL - use the HLS server port (8888)
-    // In production, this should be proxied through nginx to avoid mixed content issues
-    const protocol = window.location.protocol;
-    const hostname = window.location.hostname;
-    const hlsUrl = `${protocol}//${hostname}:${hlsPort}/live/${streamKey}/index.m3u8`;
+    const video = playlistVideos[currentVideoIndex];
+    console.log('[StreamPlayer] Loading video:', video.name, video.url);
 
-    console.log('[StreamPlayer] Loading HLS stream from:', hlsUrl);
+    videoRef.current.src = video.url;
+    videoRef.current.load();
 
-    // Set source
-    player.src({
-      src: hlsUrl,
-      type: 'application/x-mpegURL',
-    });
+    if (autoplay) {
+      videoRef.current.play().catch(err => {
+        console.error('[StreamPlayer] Autoplay failed:', err);
+      });
+    }
+  }, [playlistVideos, currentVideoIndex, autoplay]);
 
-    // Handle player events
-    player.on('loadedmetadata', () => {
-      console.log('[StreamPlayer] Stream loaded successfully');
-      setIsLoading(false);
-      setHasError(false);
-    });
+  // Handle video events
+  const handleLoadedData = () => {
+    console.log('[StreamPlayer] Video loaded successfully');
+    setIsLoading(false);
+    setHasError(false);
+  };
 
-    player.on('error', (error) => {
-      console.error('[StreamPlayer] Player error:', error);
-      setIsLoading(false);
-      setHasError(true);
-    });
+  const handleError = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
+    const videoEl = e.currentTarget;
+    const error = videoEl.error;
+    console.error('[StreamPlayer] Video error:', error?.code, error?.message);
+    setIsLoading(false);
+    setHasError(true);
+  };
 
-    player.on('waiting', () => {
-      console.log('[StreamPlayer] Buffering...');
-    });
+  const handleEnded = () => {
+    console.log('[StreamPlayer] Video ended, playing next');
+    playNextVideo();
+  };
 
-    player.on('playing', () => {
-      console.log('[StreamPlayer] Playing stream');
-      setIsLoading(false);
-      setHasError(false);
-    });
-
-    // Cleanup
-    return () => {
-      if (playerRef.current) {
-        playerRef.current.dispose();
-        playerRef.current = null;
-      }
-    };
-  }, [streamKey, hlsPort, autoplay, controls, muted]);
+  const handlePlaying = () => {
+    console.log('[StreamPlayer] Video playing');
+    setIsLoading(false);
+  };
 
   return (
     <div className={`relative w-full h-full bg-black ${className}`} data-testid="stream-player-container">
-      <div data-vjs-player className="w-full h-full">
-        <video
-          ref={videoRef}
-          className="video-js vjs-big-play-centered vjs-theme-city"
-          playsInline
-          data-testid="video-element"
-        />
-      </div>
-      
+      <video
+        ref={videoRef}
+        className="w-full h-full"
+        controls={controls}
+        autoPlay={autoplay}
+        muted={muted}
+        playsInline
+        onLoadedData={handleLoadedData}
+        onError={handleError}
+        onEnded={handleEnded}
+        onPlaying={handlePlaying}
+        data-testid="video-element"
+      />
+
       {/* Loading overlay */}
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+      {isLoading && playlistVideos.length > 0 && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm pointer-events-none">
           <div className="text-center">
             <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-white text-sm">Loading stream...</p>
+            <p className="text-white text-sm">Loading video...</p>
           </div>
         </div>
       )}
 
+
       {/* Error overlay */}
-      {hasError && !isLoading && (
+      {hasError && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm">
           <div className="text-center p-6">
             <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -128,10 +131,9 @@ export function StreamPlayer({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 className="text-white text-lg font-bold mb-2">Stream Offline</h3>
+            <h3 className="text-white text-lg font-bold mb-2">Video Error</h3>
             <p className="text-gray-400 text-sm mb-4">
-              No active stream found.<br />
-              Start streaming from OBS to begin.
+              Failed to load video. Check browser console for details.
             </p>
           </div>
         </div>

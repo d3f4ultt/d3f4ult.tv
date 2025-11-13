@@ -1,10 +1,7 @@
 import { useState } from "react";
-import { Settings, Keyboard, Clock, BookOpen, Play, Pause } from "lucide-react";
+import { Settings, Keyboard, BookOpen, Copy, Check, RefreshCw, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
-import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -15,118 +12,195 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
+import { useQuery } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
+
+interface StreamConfig {
+  rtmpPort: number;
+  hlsPort: number;
+  defaultStreamKey: string;
+  enabled: boolean;
+}
+
+interface StreamStatus {
+  streamKey: string;
+  active: boolean;
+}
 
 interface SettingsPanelProps {
-  autoSwitchInterval: number;
-  onIntervalChange: (interval: number) => void;
-  autoSwitch: boolean;
-  onAutoSwitchToggle: () => void;
-  nextSwitchIn?: number;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
 
 export function SettingsPanel({
-  autoSwitchInterval,
-  onIntervalChange,
-  autoSwitch,
-  onAutoSwitchToggle,
-  nextSwitchIn,
   open: externalOpen,
   onOpenChange
 }: SettingsPanelProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = externalOpen !== undefined ? externalOpen : internalOpen;
   const setOpen = onOpenChange || setInternalOpen;
+  const { toast } = useToast();
+  const [copied, setCopied] = useState(false);
 
-  const handleIntervalChange = (value: number[]) => {
-    onIntervalChange(value[0]);
+  // Fetch stream configuration
+  const { data: config, isLoading: configLoading } = useQuery<StreamConfig>({
+    queryKey: ['/api/stream/config'],
+    refetchInterval: false,
+  });
+
+  // Fetch stream status with auto-refresh
+  const { data: status, isLoading: statusLoading, refetch: refetchStatus } = useQuery<StreamStatus>({
+    queryKey: ['/api/stream/status'],
+    refetchInterval: 5000,
+    enabled: !!config,
+  });
+
+  const handleCopyStreamKey = () => {
+    if (!config?.defaultStreamKey) return;
+
+    navigator.clipboard.writeText(config.defaultStreamKey);
+    setCopied(true);
+    toast({
+      title: 'Copied!',
+      description: 'Stream key copied to clipboard',
+    });
+
+    setTimeout(() => setCopied(false), 2000);
   };
 
-  const formatInterval = (seconds: number) => {
-    if (seconds < 60) return `${seconds}s`;
-    return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+  const handleCopyRTMPUrl = () => {
+    if (!config) return;
+
+    const rtmpUrl = `rtmp://${window.location.hostname}:${config.rtmpPort}/live`;
+    navigator.clipboard.writeText(rtmpUrl);
+    toast({
+      title: 'Copied!',
+      description: 'RTMP URL copied to clipboard',
+    });
   };
+
+  const rtmpUrl = config ? `rtmp://${window.location.hostname}:${config.rtmpPort}/live` : '';
+  const isActive = status?.active || false;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           size="icon"
           data-testid="button-settings-open"
         >
           <Settings className="h-5 w-5" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]" data-testid="dialog-settings">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto" data-testid="dialog-settings">
         <DialogHeader>
           <DialogTitle>Dashboard Settings</DialogTitle>
           <DialogDescription>
-            Customize auto-switching timing and keyboard shortcuts
+            Stream configuration, keyboard shortcuts, and setup guides
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-6 py-4">
-          {/* Auto-Switch Settings */}
+          {/* Stream Settings */}
           <Card>
             <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-primary" />
-                <CardTitle className="text-base">Auto-Switch Layouts</CardTitle>
-              </div>
-              <CardDescription>
-                Automatically cycle between layouts
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Auto-Switch Toggle */}
               <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="auto-switch">Enable Auto-Switch</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Automatically rotate through layouts
-                  </p>
+                <div className="flex items-center gap-2">
+                  <Radio className="h-4 w-4 text-primary" />
+                  <CardTitle className="text-base">Stream Settings</CardTitle>
                 </div>
                 <div className="flex items-center gap-2">
-                  {autoSwitch && nextSwitchIn !== undefined && (
-                    <Badge variant="secondary" className="text-xs">
-                      {nextSwitchIn}s
-                    </Badge>
+                  {config && config.enabled && (
+                    <>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => refetchStatus()}
+                        disabled={statusLoading}
+                        data-testid="button-refresh-status"
+                        className="h-7 w-7"
+                      >
+                        <RefreshCw className={`h-3.5 w-3.5 ${statusLoading ? 'animate-spin' : ''}`} />
+                      </Button>
+                      <Badge variant={isActive ? 'default' : 'secondary'} className="gap-1" data-testid="stream-status-badge">
+                        <Radio className={`h-3 w-3 ${isActive ? 'animate-pulse' : ''}`} />
+                        {isActive ? 'LIVE' : 'Offline'}
+                      </Badge>
+                    </>
                   )}
-                  <Switch
-                    id="auto-switch"
-                    checked={autoSwitch}
-                    onCheckedChange={onAutoSwitchToggle}
-                    data-testid="switch-auto-switch"
-                  />
                 </div>
               </div>
-
-              {/* Interval Slider (only show when enabled) */}
-              {autoSwitch && (
-                <>
-                  <div className="pt-2 border-t">
-                    <div className="flex items-center justify-between mb-2">
-                      <Label>Switch Interval</Label>
-                      <Badge variant="secondary" data-testid="text-interval-value">
-                        {formatInterval(autoSwitchInterval)}
-                      </Badge>
-                    </div>
-                    <Slider
-                      min={10}
-                      max={120}
-                      step={5}
-                      value={[autoSwitchInterval]}
-                      onValueChange={handleIntervalChange}
-                      data-testid="slider-interval"
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground mt-2">
-                      <span>10s</span>
-                      <span>2m</span>
+              <CardDescription>
+                Configure OBS for streaming
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {configLoading ? (
+                <div className="flex items-center justify-center py-4">
+                  <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : !config?.enabled ? (
+                <div className="space-y-3">
+                  <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3">
+                    <p className="text-xs font-medium text-amber-600 dark:text-amber-500">⚠️ RTMP Streaming Unavailable</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      RTMP streaming requires ports 1935 and 8888 which are not available in this environment.
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-blue-500/10 border border-blue-500/20 p-3">
+                    <p className="text-xs font-medium text-blue-600 dark:text-blue-500">💡 How to Enable</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Deploy this code to your own VPS server to enable custom RTMP streaming.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {/* RTMP URL */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">RTMP Server</label>
+                    <div className="flex gap-2">
+                      <div className="flex-1 px-3 py-2 bg-muted rounded-md font-mono text-xs truncate" data-testid="rtmp-url">
+                        {rtmpUrl}
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleCopyRTMPUrl}
+                        data-testid="button-copy-rtmp-url"
+                        className="shrink-0"
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
                   </div>
-                </>
+
+                  {/* Stream Key */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">Stream Key</label>
+                    <div className="flex gap-2">
+                      <div className="flex-1 px-3 py-2 bg-muted rounded-md font-mono text-xs truncate" data-testid="stream-key">
+                        {config.defaultStreamKey}
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleCopyStreamKey}
+                        data-testid="button-copy-stream-key"
+                      >
+                        {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Quick Instructions */}
+                  <div className="pt-2 border-t border-border">
+                    <p className="text-xs text-muted-foreground">
+                      Configure OBS with the RTMP server URL and stream key above, then start streaming.
+                    </p>
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -139,27 +213,15 @@ export function SettingsPanel({
                 <CardTitle className="text-base">Keyboard Shortcuts</CardTitle>
               </div>
               <CardDescription>
-                Quick keys for instant layout switching
+                Quick keys for common actions
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Full Dashboard</span>
-                  <Badge variant="outline" data-testid="text-shortcut-1">
-                    <kbd className="font-mono">1</kbd>
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Stream + Sidebar</span>
-                  <Badge variant="outline" data-testid="text-shortcut-2">
-                    <kbd className="font-mono">2</kbd>
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Toggle Auto-Switch</span>
-                  <Badge variant="outline" data-testid="text-shortcut-space">
-                    <kbd className="font-mono">Space</kbd>
+                  <span className="text-sm">Toggle Settings</span>
+                  <Badge variant="outline" data-testid="text-shortcut-s">
+                    <kbd className="font-mono">S</kbd>
                   </Badge>
                 </div>
               </div>

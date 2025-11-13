@@ -306,6 +306,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Playlist API routes
+  app.get('/api/playlist/videos', async (_req, res) => {
+    try {
+      const fs = await import('fs');
+      const path = await import('path');
+      const playlistDir = path.join(process.cwd(), 'media', 'playlist');
+
+      // Check if directory exists
+      if (!fs.existsSync(playlistDir)) {
+        return res.json([]);
+      }
+
+      // Read all video files
+      const files = fs.readdirSync(playlistDir);
+      const videoExtensions = ['.mp4', '.mkv', '.webm', '.avi', '.mov'];
+
+      const videos = files
+        .filter(file => videoExtensions.some(ext => file.toLowerCase().endsWith(ext)))
+        .map(file => ({
+          name: file,
+          url: `/media/playlist/${encodeURIComponent(file)}`,
+          path: path.join(playlistDir, file),
+        }));
+
+      res.json(videos);
+    } catch (error) {
+      console.error('Error fetching playlist:', error);
+      res.status(500).json({ error: 'Failed to fetch playlist' });
+    }
+  });
+
   app.post('/api/stream/generate-key', async (_req, res) => {
     try {
       const { generateStreamKey } = await import('./mediaServer');
@@ -384,6 +415,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all wallets with balances
   app.get("/api/wallets", async (req, res) => {
     try {
+      // Require authentication to prevent exposure of wallet addresses
+      const userId = await verifyUserSession(req.headers.authorization);
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required to view wallets' });
+      }
+
       const storedWallets = await storage.getWallets();
       const wallets: Wallet[] = [];
 
@@ -486,6 +523,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Add a new wallet
   app.post("/api/wallets", async (req, res) => {
     try {
+      // Require authentication to prevent spam
+      const userId = await verifyUserSession(req.headers.authorization);
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required to add wallets' });
+      }
+
       const validationResult = addWalletSchema.safeParse(req.body);
       if (!validationResult.success) {
         const validationError = fromZodError(validationResult.error);
@@ -529,6 +572,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Remove a wallet
   app.delete("/api/wallets/:id", async (req, res) => {
     try {
+      // Require authentication to prevent unauthorized deletions
+      const userId = await verifyUserSession(req.headers.authorization);
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required to remove wallets' });
+      }
+
       const { id } = req.params;
       const success = await storage.removeWallet(id);
 
@@ -546,6 +595,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update wallet label
   app.patch("/api/wallets/:id", async (req, res) => {
     try {
+      // Require authentication to prevent unauthorized modifications
+      const userId = await verifyUserSession(req.headers.authorization);
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required to update wallets' });
+      }
+
       const { id } = req.params;
 
       const validationResult = updateWalletLabelSchema.safeParse(req.body);
@@ -652,6 +707,199 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Copy Trading API Routes
+  // Get top traders leaderboard
+  app.get("/api/copytrading/traders", async (_req, res) => {
+    try {
+      // Mock data for traders - replace with real data from database/blockchain
+      const traders = [
+        {
+          address: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+          roi: 45.8,
+          winRate: 78.5,
+          trades: 156,
+          totalVolume: 245000,
+          followers: 342,
+        },
+        {
+          address: "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM",
+          roi: 38.2,
+          winRate: 72.1,
+          trades: 203,
+          totalVolume: 189000,
+          followers: 287,
+        },
+        {
+          address: "4qYPZzGLqMMJYNt6fLhgkWQrQVQrJfVVEyxQCXq5z3Ux",
+          roi: 32.5,
+          winRate: 68.9,
+          trades: 134,
+          totalVolume: 156000,
+          followers: 198,
+        },
+        {
+          address: "HpGRXoFZKzPu6W1VZvMkBvFqRXZbJmRZxHpfqJW8p9Xz",
+          roi: 28.7,
+          winRate: 65.4,
+          trades: 98,
+          totalVolume: 123000,
+          followers: 165,
+        },
+        {
+          address: "2kZ8qYXvFZ7RxEJqYjZVQQXwVQxYzPgFhJwXqP9zXpQz",
+          roi: 24.3,
+          winRate: 61.2,
+          trades: 87,
+          totalVolume: 98000,
+          followers: 142,
+        },
+      ];
+
+      res.json(traders);
+    } catch (error) {
+      console.error("Error fetching traders:", error);
+      res.status(500).json({ error: "Failed to fetch traders" });
+    }
+  });
+
+  // Get user's copy trading data
+  app.get("/api/copytrading/user/:walletAddress", async (req, res) => {
+    try {
+      const { walletAddress } = req.params;
+
+      // Mock user data - replace with real data from database
+      const userData = {
+        walletAddress,
+        portfolioValue: 12500,
+        followedTraders: [
+          {
+            address: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+            roi: 45.8,
+            trades: 23,
+            followedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+          },
+        ],
+        totalTrades: 23,
+      };
+
+      res.json(userData);
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      res.status(500).json({ error: "Failed to fetch user data" });
+    }
+  });
+
+  // Follow a trader
+  app.post("/api/copytrading/user/:walletAddress/follow", async (req, res) => {
+    try {
+      const { walletAddress } = req.params;
+      const { traderAddress } = req.body;
+
+      if (!traderAddress) {
+        return res.status(400).json({ error: "Trader address is required" });
+      }
+
+      // In production, save this to database
+      console.log(`User ${walletAddress} following trader ${traderAddress}`);
+
+      res.json({
+        success: true,
+        message: "Successfully following trader",
+        traderAddress,
+      });
+    } catch (error) {
+      console.error("Error following trader:", error);
+      res.status(500).json({ error: "Failed to follow trader" });
+    }
+  });
+
+  // Get portfolio history
+  app.get("/api/copytrading/user/:walletAddress/portfolio-history", async (req, res) => {
+    try {
+      const { walletAddress } = req.params;
+
+      // Mock portfolio history data - replace with real historical data
+      const months = ["May", "Jun", "Jul", "Aug", "Sep", "Oct"];
+      let baseValue = 5000;
+      const history = months.map(month => {
+        baseValue += (Math.random() - 0.4) * 500;
+        return {
+          date: month,
+          value: Math.round(baseValue),
+        };
+      });
+
+      res.json(history);
+    } catch (error) {
+      console.error("Error fetching portfolio history:", error);
+      res.status(500).json({ error: "Failed to fetch portfolio history" });
+    }
+  });
+
+  // Get copy trading settings
+  app.get("/api/copytrading/user/:walletAddress/settings", async (req, res) => {
+    try {
+      const { walletAddress } = req.params;
+
+      // Mock settings - replace with database storage
+      const settings = {
+        riskMultiplier: 1.0,
+        maxCollateralPerTrade: 1000,
+        enabled: true,
+      };
+
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching copy settings:", error);
+      res.status(500).json({ error: "Failed to fetch copy settings" });
+    }
+  });
+
+  // Update copy trading settings
+  app.post("/api/copytrading/user/:walletAddress/settings", async (req, res) => {
+    try {
+      const { walletAddress } = req.params;
+      const { riskMultiplier, maxCollateralPerTrade, enabled } = req.body;
+
+      // Mock update - replace with database storage
+      console.log(`Updated settings for ${walletAddress}:`, { riskMultiplier, maxCollateralPerTrade, enabled });
+
+      res.json({
+        success: true,
+        settings: { riskMultiplier, maxCollateralPerTrade, enabled },
+      });
+    } catch (error) {
+      console.error("Error updating copy settings:", error);
+      res.status(500).json({ error: "Failed to update copy settings" });
+    }
+  });
+
+  // Get recent mirrored trades
+  app.get("/api/copytrading/user/:walletAddress/trades", async (req, res) => {
+    try {
+      const { walletAddress } = req.params;
+
+      // Mock trades - replace with database storage
+      const trades = [
+        {
+          tradeHash: "0x1234567890abcdef1234567890abcdef12345678",
+          timestamp: new Date(Date.now() - 3600000).toISOString(),
+          pairIndex: 1,
+          isLong: true,
+          collateral: "100",
+          leverage: "10",
+          status: "open",
+          pnl: 0,
+        },
+      ];
+
+      res.json(trades);
+    } catch (error) {
+      console.error("Error fetching user trades:", error);
+      res.status(500).json({ error: "Failed to fetch user trades" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // WebSocket server for real-time updates
@@ -659,6 +907,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // WebSocket server for live chat
   const chatWss = new WebSocketServer({ server: httpServer, path: '/chat' });
+
+  // WebSocket server for copy trading events
+  const copyTradingWss = new WebSocketServer({ server: httpServer, path: '/copytrading' });
 
   wss.on('connection', (ws) => {
     console.log('WebSocket client connected');
@@ -682,6 +933,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('WebSocket client disconnected');
     });
   });
+
+  // Copy Trading WebSocket handler
+  copyTradingWss.on('connection', (ws) => {
+    console.log('[CopyTrading] New WebSocket connection');
+    let userWallet: string | null = null;
+
+    ws.on('message', (data) => {
+      try {
+        const payload = JSON.parse(data.toString());
+
+        if (payload.type === 'subscribe') {
+          userWallet = payload.walletAddress;
+          console.log(`[CopyTrading] User ${userWallet} subscribed to events`);
+
+          // Send connection confirmation
+          ws.send(JSON.stringify({
+            type: 'connected',
+            message: 'Connected to copy trading events',
+          }));
+
+          // Send initial status
+          ws.send(JSON.stringify({
+            type: 'status',
+            data: {
+              connected: true,
+              message: 'Real-time BSC events + block sync active',
+            },
+          }));
+        }
+      } catch (error) {
+        console.error('[CopyTrading] Error processing message:', error);
+      }
+    });
+
+    ws.on('close', () => {
+      if (userWallet) {
+        console.log(`[CopyTrading] User ${userWallet} disconnected`);
+      }
+    });
+
+    ws.on('error', (error) => {
+      console.error('[CopyTrading] WebSocket error:', error);
+    });
+  });
+
+  // Function to broadcast copy trading events to all connected clients
+  function broadcastCopyTradingEvent(event: any) {
+    const messageStr = JSON.stringify(event);
+    copyTradingWss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(messageStr);
+      }
+    });
+  }
+
+  // Simulate copy trading events (in production, this would be triggered by AsterDEX events)
+  setInterval(() => {
+    const mockEvent = {
+      type: 'trade_mirrored',
+      data: {
+        tradeHash: `0x${Math.random().toString(16).slice(2, 42)}`,
+        timestamp: new Date().toISOString(),
+        pairIndex: Math.floor(Math.random() * 10),
+        isLong: Math.random() > 0.5,
+        collateral: (Math.random() * 500 + 100).toFixed(2),
+        leverage: Math.floor(Math.random() * 10 + 1).toString(),
+        status: 'open',
+      },
+    };
+
+    // Only broadcast occasionally
+    if (Math.random() > 0.95) {
+      broadcastCopyTradingEvent(mockEvent);
+    }
+  }, 5000);
 
   // Chat WebSocket handler
   chatWss.on('connection', (ws) => {

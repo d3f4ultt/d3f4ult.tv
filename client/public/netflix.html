@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Netflix Clone</title>
+    <!-- Swiper CSS CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <style>
+        /* Global Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #141414;
+            color: #fff;
+            overflow-x: hidden;
+        }
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+        ul {
+            list-style: none;
+        }
+
+        /* Header Styles */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            z-index: 1000;
+            transition: background-color 0.3s;
+        }
+        header.scrolled {
+            background-color: #000;
+        }
+        .logo {
+            height: 40px;
+        }
+        nav ul {
+            display: flex;
+            gap: 20px;
+        }
+        nav ul li {
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .search-bar {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid #fff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            color: #fff;
+        }
+        .profile-icon {
+            width: 30px;
+            height: 30px;
+            background-color: #e50914;
+            border-radius: 50%;
+        }
+
+        /* Hero Banner */
+        .hero {
+            height: 80vh;
+            background: url('https://images.hdqwalls.com/wallpapers/squid-game-season-2-official-poster-al.jpg') no-repeat center center/cover;
+            display: flex;
+            align-items: center;
+            padding: 0 50px;
+            position: relative;
+        }
+        .hero-content {
+            max-width: 50%;
+        }
+        .hero-title {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+        .hero-desc {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+        .hero-btn {
+            background-color: #e50914;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .hero-btn.secondary {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Sliders */
+        .section {
+            padding: 20px 50px;
+        }
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+        .swiper {
+            width: 100%;
+        }
+        .swiper-slide {
+            position: relative;
+            cursor: pointer;
+        }
+        .poster {
+            width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+        .overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            padding: 10px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            text-align: center;
+        }
+        .swiper-slide:hover .overlay {
+            opacity: 1;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        .modal-content {
+            background: #141414;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 600px;
+            text-align: center;
+        }
+        .modal-title {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        .modal-desc {
+            margin-bottom: 20px;
+        }
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+
+        /* Footer */
+        footer {
+            padding: 20px;
+            text-align: center;
+            border-top: 1px solid #333;
+        }
+        footer ul {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        /* Loading Animation */
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #141414;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #e50914;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero {
+                padding: 0 20px;
+                height: 60vh;
+            }
+            .hero-content {
+                max-width: 100%;
+            }
+            .hero-title {
+                font-size: 2rem;
+            }
+            .section {
+                padding: 10px 20px;
+            }
+            nav ul {
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Animation -->
+    <div class="loader">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <img class="logo" src="https://pngimg.com/uploads/netflix/netflix_PNG16.png" alt="Netflix Logo">
+        <nav>
+            <ul>
+                <li>Home</li>
+                <li>TV Shows</li>
+                <li>Movies</li>
+                <li>New & Popular</li>
+                <li>My List</li>
+            </ul>
+        </nav>
+        <input type="text" class="search-bar" placeholder="Search">
+        <div class="profile-icon"></div>
+    </header>
+
+    <!-- Hero Banner -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">Squid Game</h1>
+            <p class="hero-desc">Hundreds of cash-strapped players accept a strange invitation to compete in children's games. Inside, a tempting prize awaits — with deadly high stakes.</p>
+            <button class="hero-btn" onclick="openMagnet('magnet:?xt=urn:btih:4063110de4169291bf2eee98c994ff91820c3498&dn=Squid.Game.S01.COMPLETE.KOREAN.720p.NF.WEBRip.x264-GalaxyTV[TGx]')">Play</button>
+            <button class="hero-btn secondary">My List</button>
+        </div>
+    </section>
+
+    <!-- Sliders Sections -->
+    <section class="section">
+        <h2 class="section-title">Trending Now</h2>
+        <div class="swiper">
+            <div class="swiper-wrapper">
+                <div class="swiper-slide" onclick="showModal('Stranger Things', 'A group of kids uncover mysteries in their town.', 'magnet:?xt=urn:btih:1234567890abcdef1234567890abcdef12345678&dn=Stranger.Things.Complete.Series')">
+                    <img class="poster" src="http://www.impawards.com/tv/posters/stranger_things.jpg" alt="Stranger Things">
+                    <div class="overlay">Stranger Things</div>
+                </div>
+                <div class="swiper-slide" onclick="showModal('Squid Game', 'Deadly games for cash prize.', 'magnet:?xt=urn:btih:4063110de4169291bf2eee98c994ff91820c3498&dn=Squid.Game.S01.COMPLETE.KOREAN.720p.NF.WEBRip.x264-GalaxyTV[TGx]')">
+                    <img class="poster" src="https://images.hdqwalls.com/wallpapers/squid-game-season-2-official-poster-al.jpg" alt="Squid Game">
+                    <div class="overlay">Squid Game</div>
+                </div>
+                <div class="swiper-slide" onclick="showModal('The Crown', 'The story of Queen Elizabeth II.', 'magnet:?xt=urn:btih:abcdef1234567890abcdef1234567890abcdef12&dn=The.Crown.Complete.Series')">
+                    <img class="poster" src="https://wallpapercave.com/wp/wp15306777.jpg" alt="The Crown">
+                    <div class="overlay">The Crown</div>
+                </div>
+                <div class="swiper-slide" onclick="showModal('Bridgerton', 'Romance in Regency era.', 'magnet:?xt=urn:btih:c03d52bf998e6f37cd56e79e1d88d232249c1bf7&dn=Bridgerton.S03.1080p.x265-AMBER')">
+                    <img class="poster" src="https://i.redd.it/zzwvze1goutc1.jpeg" alt="Bridgerton">
+                    <div class="overlay">Bridgerton</div>
+                </div>
+                <div class="swiper-slide" onclick="showModal('The Witcher', 'Fantasy adventure with Geralt.', 'magnet:?xt=urn:btih:21c0a8dd15be11c090f343eef01cca64e42f81e0&dn=The.Witcher.Series.Books')">
+                    <img class="poster" src="https://i.redd.it/xnzk904cqvz31.jpg" alt="The Witcher">
+                    <div class="overlay">The Witcher</div>
+                </div>
+                <div class="swiper-slide" onclick="showModal('Money Heist', 'Heist at the Royal Mint.', 'magnet:?xt=urn:btih:fedcba9876543210fedcba9876543210fedcba98&dn=Money.Heist.Complete.Series')">
+                    <img class="poster" src="http://www.impawards.com/tv/posters/money_heist.jpg" alt="Money Heist">
+                    <div class="overlay">Money Heist</div>
+                </div>
+            </div>
+            <div class="swiper-button-prev"></div>
+            <div class="swiper-button-next"></div>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">Netflix Originals</h2>
+        <div class="swiper">
+            <div class="swiper-wrapper">
+                <div class="swiper-slide" onclick="showModal('Narcos', 'Story of drug cartels.', 'magnet:?xt=urn:btih:1a220f872c3b4941bb64f3a71a6d9bf595367921&dn=Narcos.S01.1080p.Bluray.DTS.x264-ROVERS')">
+                    <img class="poster" src="http://www.impawards.com/tv/posters/narcos.jpg" alt="Narcos">
+                    <div class="overlay">Narcos</div>
+                </div>
+                <div class="swiper-slide" onclick="showModal('Wednesday', 'Wednesday Addams at school.', 'magnet:?xt=urn:btih:9876543210fedcba9876543210fedcba98765432&dn=Wednesday.Complete.Series')">
+                    <img class="poster" src="https://www.uhdpaper.com/2022/09/wednesday-addams-jenna-ortega-4k-6530h.jpg" alt="Wednesday">
+                    <div class="overlay">Wednesday</div>
+                </div>
+                <div class="swiper-slide" onclick="showModal('Stranger Things', 'A group of kids uncover mysteries in their town.', 'magnet:?xt=urn:btih:1234567890abcdef1234567890abcdef12345678&dn=Stranger.Things.Complete.Series')">
+                    <img class="poster" src="http://www.impawards.com/tv/posters/stranger_things.jpg" alt="Stranger Things">
+                    <div class="overlay">Stranger Things</div>
+                </div>
+                <div class="swiper-slide" onclick="showModal('Squid Game', 'Deadly games for cash prize.', 'magnet:?xt=urn:btih:4063110de4169291bf2eee98c994ff91820c3498&dn=Squid.Game.S01.COMPLETE.KOREAN.720p.NF.WEBRip.x264-GalaxyTV[TGx]')">
+                    <img class="poster" src="https://images.hdqwalls.com/wallpapers/squid-game-season-2-official-poster-al.jpg" alt="Squid Game">
+                    <div class="overlay">Squid Game</div>
+                </div>
+                <div class="swiper-slide" onclick="showModal('The Crown', 'The story of Queen Elizabeth II.', 'magnet:?xt=urn:btih:abcdef1234567890abcdef1234567890abcdef12&dn=The.Crown.Complete.Series')">
+                    <img class="poster" src="https://wallpapercave.com/wp/wp15306777.jpg" alt="The Crown">
+                    <div class="overlay">The Crown</div>
+                </div>
+                <div class="swiper-slide" onclick="showModal('Bridgerton', 'Romance in Regency era.', 'magnet:?xt=urn:btih:c03d52bf998e6f37cd56e79e1d88d232249c1bf7&dn=Bridgerton.S03.1080p.x265-AMBER')">
+                    <img class="poster" src="https://i.redd.it/zzwvze1goutc1.jpeg" alt="Bridgerton">
+                    <div class="overlay">Bridgerton</div>
+                </div>
+            </div>
+            <div class="swiper-button-prev"></div>
+            <div class="swiper-button-next"></div>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">Action Movies</h2>
+        <div class="swiper">
+            <div class="swiper-wrapper">
+                <div class="swiper-slide" onclick="showModal('The Witcher', 'Fantasy adventure with Geralt.', 'magnet:?xt=urn:btih:21c0a8dd15be11c090f343eef01cca64e42f81e0&dn=The.Witcher.Series.Books')">
+                    <img class="poster" src="https://i.redd.it/xnzk904cqvz31.jpg" alt="The Witcher">
+                    <div class="overlay">The Witcher</div>
+                </div>
+                <div class="swiper-slide" onclick="showModal('Money Heist', 'Heist at the Royal Mint.', 'magnet:?xt=urn:btih:fedcba9876543210fedcba9876543210fedcba98&dn=Money.Heist.Complete.Series')">
+                    <img class="poster" src="http://www.impawards.com/tv/posters/money_heist.jpg" alt="Money Heist">
+                    <div class="overlay">Money Heist</div>
+                </div>
+                <div class="swiper-slide" onclick="showModal('Narcos', 'Story of drug cartels.', 'magnet:?xt=urn:btih:1a220f872c3b4941bb64f3a71a6d9bf595367921&dn=Narcos.S01.1080p.Bluray.DTS.x264-ROVERS')">
+                    <img class="poster" src="http://www.impawards.com/tv/posters/narcos.jpg" alt="Narcos">
+                    <div class="overlay">Narcos</div>
+                </div>
+                <div class="swiper-slide" onclick="showModal('Wednesday', 'Wednesday Addams at school.', 'magnet:?xt=urn:btih:9876543210fedcba9876543210fedcba98765432&dn=Wednesday.Complete.Series')">
+                    <img class="poster" src="https://www.uhdpaper.com/2022/09/wednesday-addams-jenna-ortega-4k-6530h.jpg" alt="Wednesday">
+                    <div class="overlay">Wednesday</div>
+                </div>
+                <div class="swiper-slide" onclick="showModal('Stranger Things', 'A group of kids uncover mysteries in their town.', 'magnet:?xt=urn:btih:1234567890abcdef1234567890abcdef12345678&dn=Stranger.Things.Complete.Series')">
+                    <img class="poster" src="http://www.impawards.com/tv/posters/stranger_things.jpg" alt="Stranger Things">
+                    <div class="overlay">Stranger Things</div>
+                </div>
+                <div class="swiper-slide" onclick="showModal('Squid Game', 'Deadly games for cash prize.', 'magnet:?xt=urn:btih:4063110de4169291bf2eee98c994ff91820c3498&dn=Squid.Game.S01.COMPLETE.KOREAN.720p.NF.WEBRip.x264-GalaxyTV[TGx]')">
+                    <img class="poster" src="https://images.hdqwalls.com/wallpapers/squid-game-season-2-official-poster-al.jpg" alt="Squid Game">
+                    <div class="overlay">Squid Game</div>
+                </div>
+            </div>
+            <div class="swiper-button-prev"></div>
+            <div class="swiper-button-next"></div>
+        </div>
+    </section>
+
+    <!-- Modal -->
+    <div class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 class="modal-title"></h2>
+            <p class="modal-desc"></p>
+            <button class="hero-btn" id="play-btn">Play</button>
+            <button class="hero-btn secondary">Add to My List</button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <ul>
+            <li>About Netflix</li>
+            <li>Terms of Use</li>
+            <li>Privacy</li>
+            <li>Contact Us</li>
+        </ul>
+    </footer>
+
+    <!-- Swiper JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script>
+        // Initialize Swipers
+        document.querySelectorAll('.swiper').forEach(el => {
+            new Swiper(el, {
+                slidesPerView: 'auto',
+                spaceBetween: 10,
+                navigation: {
+                    nextEl: '.swiper-button-next',
+                    prevEl: '.swiper-button-prev',
+                },
+                breakpoints: {
+                    640: { slidesPerView: 3 },
+                    768: { slidesPerView: 4 },
+                    1024: { slidesPerView: 6 },
+                },
+                loop: true, // Optional loop
+                autoplay: { delay: 5000, disableOnInteraction: false }, // Optional auto-slide
+            });
+        });
+
+        // Header Scroll Effect
+        window.addEventListener('scroll', () => {
+            document.querySelector('header').classList.toggle('scrolled', window.scrollY > 0);
+        });
+
+        // Modal Functionality
+        const modal = document.querySelector('.modal');
+        const modalTitle = document.querySelector('.modal-title');
+        const modalDesc = document.querySelector('.modal-desc');
+        const playBtn = document.getElementById('play-btn');
+        const closeModal = document.querySelector('.close-modal');
+        let currentMagnet = '';
+
+        function showModal(title, desc, magnet) {
+            modalTitle.textContent = title;
+            modalDesc.textContent = desc;
+            currentMagnet = magnet;
+            modal.style.display = 'flex';
+        }
+
+        playBtn.addEventListener('click', () => {
+            openMagnet(currentMagnet);
+        });
+
+        closeModal.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.style.display = 'none';
+        });
+
+        // Open Magnet Link
+        function openMagnet(magnet) {
+            const a = document.createElement('a');
+            a.href = magnet;
+            a.click();
+        }
+
+        // Hide Loader after Load
+        window.addEventListener('load', () => {
+            document.querySelector('.loader').style.display = 'none';
+        });
+    </script>
+</body>
+</html>

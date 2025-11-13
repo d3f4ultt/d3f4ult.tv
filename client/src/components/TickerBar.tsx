@@ -1,20 +1,38 @@
 import { TrendingUp, TrendingDown } from "lucide-react";
 import type { CryptoPrice } from "@shared/schema";
+import { PortfolioDialog } from "@/components/portfolio/PortfolioDialog";
+import { SettingsPanel } from "@/components/SettingsPanel";
+import { LiveIndicator } from "@/components/LiveIndicator";
+import { LoginButton } from "@/components/auth/LoginButton";
+import { UserMenu } from "@/components/auth/UserMenu";
+import { useAuth } from "@/contexts/AuthContext";
+import { WalletButton } from "@/components/WalletButton";
+import { HamburgerMenu } from "@/components/HamburgerMenu";
 
 interface TickerBarProps {
   prices: CryptoPrice[];
+  settingsOpen?: boolean;
+  onSettingsOpenChange?: (open: boolean) => void;
+  wsConnected?: boolean;
 }
 
-export function TickerBar({ prices }: TickerBarProps) {
+export function TickerBar({ prices, settingsOpen, onSettingsOpenChange, wsConnected }: TickerBarProps) {
+  const { user, isLoading: authLoading } = useAuth();
+
   // Duplicate prices for seamless scrolling
   const duplicatedPrices = [...prices, ...prices, ...prices];
 
   return (
     <div
-      className="bg-ticker border-y border-border overflow-hidden flex items-center"
+      className="bg-ticker border-y border-border flex items-center relative z-50"
       data-testid="ticker-bar"
     >
-      {/* Price Ticker (Full Width - Scrolling) */}
+      {/* Hamburger Menu - Fixed on Left Side */}
+      <div className="flex items-center px-4 border-r border-border bg-ticker flex-shrink-0 relative z-[100]">
+        <HamburgerMenu />
+      </div>
+
+      {/* Price Ticker Container with overflow */}
       <div className="flex-1 overflow-hidden">
         <div className="flex animate-ticker-scroll">
           {duplicatedPrices.map((crypto, index) => {
@@ -48,6 +66,21 @@ export function TickerBar({ prices }: TickerBarProps) {
             );
           })}
         </div>
+      </div>
+
+      {/* Control Buttons - Fixed on Right Side */}
+      <div className="flex items-center gap-2 px-4 border-l border-border bg-ticker flex-shrink-0">
+        <PortfolioDialog />
+        <WalletButton />
+        {settingsOpen !== undefined && onSettingsOpenChange && (
+          <SettingsPanel
+            open={settingsOpen}
+            onOpenChange={onSettingsOpenChange}
+          />
+        )}
+        {wsConnected !== undefined && <LiveIndicator connected={wsConnected} />}
+        <div className="w-px h-6 bg-border" />
+        {!authLoading && (user ? <UserMenu /> : <LoginButton />)}
       </div>
     </div>
   );

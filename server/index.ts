@@ -7,6 +7,9 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Serve media files (playlist videos)
+app.use('/media', express.static('media'));
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
