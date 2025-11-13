@@ -6,3 +6,19 @@ vite.config.ts.*
 *.tar.gz
 .local/
 media/
+
+# Environment variables (SECURITY: Never commit these!)
+.env
+.env.local
+.env.*.local
+client/.env
+client/.env.local
+*.env
+
+# Secrets and credentials
+*_KEY
+*_SECRET
+*_TOKEN
+*.pem
+*.key
+*.crt
